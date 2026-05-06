@@ -1,0 +1,1360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reading Adventures</title>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;600;700&family=Nunito:wght@400;600;700;800&family=Bangers&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700&display=swap" rel="stylesheet">
+<style>
+@font-face {
+  font-family: 'OpenDyslexic';
+  src: url('https://cdn.jsdelivr.net/gh/antijingoist/opendyslexic@master/compiled/OpenDyslexic-Regular.woff2') format('woff2'),
+       url('https://cdn.jsdelivr.net/gh/antijingoist/opendyslexic@master/compiled/OpenDyslexic-Regular.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+:root {
+  --ocean:#1565a8;--ocean-mid:#1976d2;--ocean-light:#42a5f5;
+  --leaf:#2e7d32;--leaf-light:#66bb6a;
+  --coral:#d32f2f;--amber:#f9a825;
+  --correct:#2e7d32;--wrong:#c62828;
+  --hl-vocab:#fff176;--hl-comp:#b3e5fc;--hl-infer:#ffe0b2;
+  --bg:#f0f4f8;--page-bg:#ffffff;--card:#ffffff;--card2:#e8f0fe;
+  --text:#1a1a2e;--text-dim:#4a5568;--border:#c5d0e0;
+  --radius:12px;
+  --font-body:'Lexend',sans-serif;
+  --font-size:15px;
+  --line-height:1.7;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  font-family:var(--font-body);
+  background:var(--bg);
+  color:var(--text);
+  min-height:100vh;
+  font-size:var(--font-size);
+  line-height:var(--line-height);
+}
+h1,h2,h3,h4{font-style:normal;}
+p,span,div,li,button,label,select,option{font-style:normal;}
+
+/* ---- SCREENS ---- */
+.screen{display:none;} .screen.active{display:block;}
+
+/* ---- BUTTONS ---- */
+.btn{
+  font-family:var(--font-body);font-weight:700;font-size:0.92rem;
+  padding:10px 20px;border-radius:50px;border:none;cursor:pointer;
+  transition:all 0.18s ease;display:inline-flex;align-items:center;gap:8px;
+  text-align:left;
+}
+.btn:hover{transform:translateY(-2px);filter:brightness(0.92);}
+.btn:active{transform:translateY(0);}
+.btn-primary{background:var(--ocean-mid);color:#fff;}
+.btn-leaf{background:var(--leaf);color:#fff;}
+.btn-coral{background:var(--coral);color:#fff;}
+.btn-ghost{background:transparent;color:var(--text-dim);border:2px solid var(--border);}
+.btn-sand{background:#e0d0a0;color:#2a1a00;}
+.btn-amber{background:var(--amber);color:#1a0a00;}
+.btn-sm{padding:7px 16px;font-size:0.85rem;}
+.btn-xs{padding:4px 12px;font-size:0.8rem;border-radius:20px;}
+
+/* TTS BUTTONS — clearly styled, won't trigger choice selection */
+.tts-btn{
+  background:#e3f2fd;border:2px solid var(--ocean-mid);
+  color:var(--ocean-mid);border-radius:20px;padding:5px 12px;
+  font-size:0.82rem;cursor:pointer;font-family:var(--font-body);
+  font-weight:700;transition:all 0.15s;white-space:nowrap;
+  display:inline-flex;align-items:center;gap:5px;flex-shrink:0;
+  user-select:none;
+}
+.tts-btn:hover{background:#bbdefb;}
+.tts-btn.speaking{background:var(--ocean-mid);color:#fff;}
+
+/* ---- HOME ---- */
+#home-screen{padding:20px 16px;max-width:960px;margin:0 auto;}
+.home-header{text-align:left;padding:24px 0 16px;}
+.home-header h1{
+  font-family:'Bangers',cursive;font-size:clamp(2rem,5vw,3.2rem);
+  letter-spacing:2px;color:var(--ocean-mid);margin-bottom:6px;
+}
+.home-header p{color:var(--text-dim);font-size:1rem;}
+.home-controls{display:flex;gap:10px;flex-wrap:wrap;margin:14px 0 20px;}
+.passages-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:12px;}
+.pcard{
+  background:var(--card);border:2px solid var(--border);border-radius:var(--radius);
+  padding:14px 12px;cursor:pointer;transition:all 0.2s;text-align:left;position:relative;
+  box-shadow:0 1px 4px rgba(0,0,0,0.08);
+}
+.pcard:hover{border-color:var(--ocean-mid);transform:translateY(-3px);box-shadow:0 6px 18px rgba(0,0,0,0.13);}
+.pcard.done{border-color:var(--leaf);background:#f1f8f2;}
+.pcard.done::after{content:'✓';position:absolute;top:8px;right:10px;color:var(--leaf);font-weight:900;font-size:1rem;}
+.pcard-num{font-family:'Bangers',cursive;font-size:1.5rem;color:var(--ocean-mid);letter-spacing:1px;}
+.pcard-emoji{font-size:1.3rem;margin:3px 0;}
+.pcard-title{font-size:0.78rem;color:var(--text-dim);font-weight:700;line-height:1.3;}
+.pcard-score{font-size:0.72rem;color:var(--leaf);font-weight:800;margin-top:4px;}
+
+/* ---- READING SCREEN ---- */
+#reading-screen{max-width:1020px;margin:0 auto;padding:14px 16px;}
+.reading-layout{display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start;}
+@media(max-width:720px){.reading-layout{grid-template-columns:1fr;}}
+
+/* PER-PASSAGE SETTINGS BAR */
+.passage-settings{
+  background:#fff;border:1.5px solid var(--border);border-radius:var(--radius);
+  padding:12px 16px;margin-bottom:14px;
+  display:flex;gap:16px;flex-wrap:wrap;align-items:center;
+  box-shadow:0 1px 4px rgba(0,0,0,0.06);
+}
+.passage-settings label{color:var(--text-dim);font-size:0.85rem;font-weight:700;display:flex;align-items:center;gap:8px;}
+.passage-settings select{
+  font-family:var(--font-body);font-size:0.85rem;padding:4px 8px;
+  border:1.5px solid var(--border);border-radius:8px;background:#fff;color:var(--text);
+  cursor:pointer;
+}
+.passage-settings input[type=range]{accent-color:var(--ocean-mid);width:80px;cursor:pointer;}
+.passage-settings .speed-label{font-weight:800;color:var(--ocean-mid);min-width:34px;font-size:0.85rem;}
+.spacing-btn{
+  background:#e3f2fd;border:1.5px solid var(--border);color:var(--text);
+  border-radius:8px;padding:4px 10px;font-size:0.82rem;font-weight:700;
+  cursor:pointer;font-family:var(--font-body);transition:all 0.15s;
+}
+.spacing-btn.active{border-color:var(--ocean-mid);background:var(--ocean-mid);color:#fff;}
+
+/* PASSAGE PANEL */
+.passage-panel{
+  background:#fff;border:1.5px solid var(--border);border-radius:var(--radius);
+  padding:20px;box-shadow:0 1px 4px rgba(0,0,0,0.07);
+}
+.passage-header{margin-bottom:12px;}
+.passage-num-badge{
+  display:inline-block;background:var(--ocean-mid);color:#fff;
+  border-radius:8px;padding:3px 10px;font-size:0.8rem;font-weight:800;margin-bottom:6px;
+}
+.passage-title{font-family:'Bangers',cursive;font-size:1.4rem;letter-spacing:1px;color:var(--ocean-mid);}
+.passage-controls{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;align-items:center;}
+
+.passage-body{
+  line-height:var(--line-height);font-size:var(--font-size);
+  color:var(--text);text-align:left;
+}
+.passage-body p{margin-bottom:1em;}
+.passage-body .word{
+  cursor:pointer;border-radius:3px;padding:0 1px;
+  transition:background 0.1s;display:inline;
+}
+.passage-body .word:hover{background:rgba(25,118,210,0.1);}
+.word.hl-vocab{background:var(--hl-vocab);border-radius:3px;}
+.word.hl-comp{background:var(--hl-comp);border-radius:3px;}
+.word.hl-infer{background:var(--hl-infer);border-radius:3px;}
+.word.reading-hl{background:var(--ocean-mid) !important;color:#fff !important;border-radius:3px;}
+
+.hl-legend{display:none;gap:10px;flex-wrap:wrap;margin-top:10px;font-size:0.78rem;}
+.hl-legend.visible{display:flex;}
+.hl-dot{display:flex;align-items:center;gap:5px;color:var(--text-dim);}
+.hl-swatch{width:14px;height:14px;border-radius:3px;flex-shrink:0;}
+
+/* QUESTION PANEL */
+.question-panel{
+  background:#fff;border:1.5px solid var(--border);border-radius:var(--radius);
+  padding:20px;box-shadow:0 1px 4px rgba(0,0,0,0.07);
+}
+.q-progress{margin-bottom:16px;}
+.q-progress-bar{height:7px;background:#e2e8f0;border-radius:4px;overflow:hidden;}
+.q-progress-fill{height:100%;background:linear-gradient(90deg,var(--ocean-mid),var(--ocean-light));border-radius:4px;transition:width 0.4s ease;}
+.q-progress-text{font-size:0.8rem;color:var(--text-dim);margin-top:5px;font-weight:700;}
+
+.q-type-badge{
+  display:inline-block;padding:3px 10px;border-radius:20px;
+  font-size:0.72rem;font-weight:800;letter-spacing:0.5px;margin-bottom:10px;
+}
+.badge-comp{background:#e3f2fd;color:#1565a8;}
+.badge-vocab{background:#fffde7;color:#f57f17;}
+.badge-infer{background:#fff3e0;color:#e65100;}
+
+.q-text{
+  font-size:1rem;font-weight:700;line-height:1.6;
+  color:var(--text);text-align:left;margin-bottom:4px;
+}
+.q-header{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:12px;}
+
+/* CHOICES — TTS button is separate and CANNOT trigger answer selection */
+.choices{display:flex;flex-direction:column;gap:9px;}
+.choice-wrapper{position:relative;}
+.choice{
+  display:flex;align-items:flex-start;gap:10px;
+  background:#f8fafc;border:2px solid var(--border);
+  border-radius:10px;padding:10px 14px;
+  transition:all 0.15s;font-weight:600;
+  font-size:0.93rem;color:var(--text);text-align:left;
+  line-height:1.5;
+}
+.choice.selectable{cursor:pointer;}
+.choice.selectable:hover{border-color:var(--ocean-mid);background:#e3f2fd;}
+.choice.correct{border-color:var(--correct);background:#e8f5e9;color:#1b5e20;}
+.choice.wrong{border-color:var(--wrong);background:#ffebee;color:#7f0000;}
+.choice-letter{
+  width:26px;height:26px;border-radius:50%;
+  background:#e2e8f0;display:flex;align-items:center;justify-content:center;
+  font-size:0.8rem;font-weight:800;flex-shrink:0;margin-top:1px;
+}
+.choice.correct .choice-letter{background:var(--correct);color:#fff;}
+.choice.wrong .choice-letter{background:var(--wrong);color:#fff;}
+.choice-text{flex:1;}
+
+/* TTS row below the choice text */
+.choice-tts-row{padding:4px 14px 8px 50px;}
+
+.feedback-msg{
+  margin-top:12px;padding:10px 14px;border-radius:10px;
+  font-weight:700;font-size:0.9rem;text-align:left;
+}
+.feedback-msg.correct{background:#e8f5e9;border:1.5px solid var(--correct);color:#1b5e20;}
+.feedback-msg.wrong{background:#ffebee;border:1.5px solid var(--wrong);color:#7f0000;}
+
+.q-nav{display:flex;justify-content:space-between;align-items:center;margin-top:16px;gap:10px;flex-wrap:wrap;}
+.timer-display{font-family:'Bangers',cursive;font-size:1.2rem;color:var(--text-dim);letter-spacing:1px;}
+
+/* TOP NAV BAR */
+.top-nav{
+  display:flex;align-items:center;gap:12px;margin-bottom:14px;
+  flex-wrap:wrap;
+}
+.top-nav h2{font-family:'Bangers',cursive;font-size:1.4rem;color:var(--ocean-mid);letter-spacing:1px;flex:1;}
+
+/* ---- SUMMARY ---- */
+#summary-screen{max-width:760px;margin:0 auto;padding:20px 16px;}
+.summary-card{
+  background:#fff;border:1.5px solid var(--border);border-radius:var(--radius);
+  padding:22px;margin-bottom:16px;box-shadow:0 1px 4px rgba(0,0,0,0.07);
+}
+.summary-title{font-family:'Bangers',cursive;font-size:1.8rem;letter-spacing:2px;color:var(--ocean-mid);margin-bottom:4px;}
+.accuracy-ring{width:110px;height:110px;margin:0 auto 12px;}
+.accuracy-pct{font-family:'Bangers',cursive;font-size:2.2rem;color:var(--ocean-mid);text-align:center;margin-bottom:4px;}
+.summary-row{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:8px 0;border-bottom:1px solid var(--border);font-size:0.93rem;
+}
+.summary-row:last-child{border-bottom:none;}
+.summary-label{color:var(--text-dim);font-weight:700;}
+.summary-val{font-weight:800;}
+.summary-val.green{color:var(--correct);}
+.summary-val.red{color:var(--wrong);}
+.q-breakdown{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:14px;}
+.qb-card{background:#f8fafc;border:1.5px solid var(--border);border-radius:10px;padding:12px;text-align:center;}
+.qb-label{font-size:0.72rem;color:var(--text-dim);font-weight:800;margin-bottom:4px;}
+.qb-score{font-family:'Bangers',cursive;font-size:1.5rem;}
+.narrative-section{background:#f8fafc;border-radius:10px;padding:16px;margin-top:12px;border:1px solid var(--border);}
+.narrative-section h3{color:var(--ocean-mid);font-size:0.88rem;font-weight:800;margin-bottom:8px;letter-spacing:0.3px;}
+.narrative-section p{font-size:0.9rem;line-height:1.7;color:var(--text);}
+.obs-list{list-style:none;padding:0;}
+.obs-list li{padding:7px 0 7px 22px;position:relative;font-size:0.9rem;border-bottom:1px solid var(--border);line-height:1.6;}
+.obs-list li:last-child{border-bottom:none;}
+.obs-list li::before{content:'•';position:absolute;left:0;color:var(--ocean-mid);font-weight:900;}
+.support-stats{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px;}
+.stat-pill{background:#e3f2fd;border:1px solid #b3d4f5;border-radius:20px;padding:6px 14px;font-size:0.83rem;font-weight:700;color:var(--text);}
+
+@media print{
+  .no-print{display:none!important;}
+  body{background:#fff;color:#000;font-size:13px;}
+  .summary-card{border:1px solid #ccc;box-shadow:none;page-break-inside:avoid;}
+  #summary-screen{max-width:100%;padding:0;}
+}
+</style>
+</head>
+<body>
+
+<!-- ===================== HOME SCREEN ===================== -->
+<div id="home-screen" class="screen active">
+  <div style="max-width:960px;margin:0 auto;padding:20px 16px;">
+    <div class="home-header">
+      <h1>🌿 Reading Adventures</h1>
+      <p style="color:var(--text-dim)">Choose a passage to begin</p>
+    </div>
+    <div class="home-controls">
+      <button class="btn btn-coral btn-sm" onclick="if(confirm('Reset all saved progress?')){resetProgress();}">🗑 Reset All Progress</button>
+    </div>
+    <div class="passages-grid" id="passages-grid"></div>
+  </div>
+</div>
+
+<!-- ===================== READING SCREEN ===================== -->
+<div id="reading-screen" class="screen">
+  <div id="reading-inner" style="max-width:1020px;margin:0 auto;padding:14px 16px;">
+
+    <!-- Top nav -->
+    <div class="top-nav no-print">
+      <button class="btn btn-ghost btn-sm" onclick="goHome()">← Home</button>
+      <h2 id="reading-title-nav"></h2>
+      <div class="timer-display" id="timer-display">0:00</div>
+    </div>
+
+    <!-- Per-passage settings bar -->
+    <div class="passage-settings no-print">
+      <label>
+        🔤 Font:
+        <select id="font-select" onchange="applyFont(this.value)">
+          <option value="Lexend">Lexend ✓</option>
+          <option value="'Atkinson Hyperlegible'">Atkinson Hyperlegible ✓</option>
+          <option value="OpenDyslexic">OpenDyslexic ✓</option>
+          <option value="Verdana">Verdana (system)</option>
+          <option value="Arial">Arial (system)</option>
+          <option value="Tahoma">Tahoma (system)</option>
+          <option value="'Comic Sans MS'">Comic Sans (system)</option>
+          <option value="sans-serif">Sans-serif (system)</option>
+        </select>
+      </label>
+      <label>
+        📏 Size:
+        <select id="size-select" onchange="applySize(this.value)">
+          <option value="13px">13px</option>
+          <option value="14px">14px</option>
+          <option value="15px" selected>15px</option>
+          <option value="16px">16px</option>
+          <option value="18px">18px</option>
+          <option value="20px">20px</option>
+        </select>
+      </label>
+      <label>
+        ↕ Spacing:
+        <button class="spacing-btn active" id="sp-15" onclick="applySpacing(1.7,'sp-15')">1.5×</button>
+        <button class="spacing-btn" id="sp-20" onclick="applySpacing(2.2,'sp-20')">2×</button>
+      </label>
+      <label>
+        🔊 Speed:
+        <input type="range" id="speed-slider" min="0.5" max="1.4" step="0.05" value="0.85" oninput="updateSpeed(this.value)">
+        <span class="speed-label" id="speed-label">0.85×</span>
+      </label>
+    </div>
+
+    <!-- Two column layout -->
+    <div class="reading-layout">
+
+      <!-- PASSAGE PANEL -->
+      <div class="passage-panel">
+        <div class="passage-header">
+          <div class="passage-num-badge" id="passage-num-label"></div>
+          <div class="passage-title" id="passage-title-label"></div>
+        </div>
+
+        <!-- Audio controls -->
+        <div class="passage-controls">
+          <button class="tts-btn" id="read-all-btn" onclick="readFullPassage()">▶ Read Passage</button>
+          <button class="tts-btn" id="pause-btn" onclick="pauseResumeSpeech()" style="display:none;border-color:#f57f17;color:#f57f17;">⏸ Pause</button>
+          <button class="tts-btn" onclick="stopSpeech()" style="border-color:#c62828;color:#c62828;">■ Stop</button>
+        </div>
+
+        <div class="passage-body" id="passage-body"></div>
+
+        <div class="hl-legend" id="hl-legend">
+          <div class="hl-dot"><div class="hl-swatch" style="background:var(--hl-vocab)"></div> Vocabulary word</div>
+          <div class="hl-dot"><div class="hl-swatch" style="background:var(--hl-comp)"></div> Comprehension clue</div>
+          <div class="hl-dot"><div class="hl-swatch" style="background:var(--hl-infer)"></div> Inference clue</div>
+        </div>
+      </div>
+
+      <!-- QUESTION PANEL -->
+      <div class="question-panel">
+        <div class="q-progress">
+          <div class="q-progress-bar"><div class="q-progress-fill" id="q-progress-fill" style="width:0%"></div></div>
+          <div class="q-progress-text" id="q-progress-text">Question 1 of 10</div>
+        </div>
+        <div id="question-area"></div>
+      </div>
+
+    </div><!-- end reading-layout -->
+  </div>
+</div>
+
+<!-- ===================== SUMMARY SCREEN ===================== -->
+<div id="summary-screen" class="screen">
+  <div style="max-width:760px;margin:0 auto;padding:20px 16px;">
+    <div class="top-nav no-print">
+      <button class="btn btn-ghost btn-sm" onclick="goHome()">← Home</button>
+      <h2>Session Summary</h2>
+      <button class="btn btn-primary btn-sm no-print" onclick="window.print()">🖨 Print</button>
+    </div>
+    <div id="summary-content"></div>
+  </div>
+</div>
+
+<script>
+// ===================== PASSAGE DATA =====================
+const ALL_PASSAGES = [
+{
+    id: 1, title: "The Trap-Door Spider", theme: "insect", emoji: "🕷️",
+    text: "The trap-door spider is one of nature's most patient hunters. It spends weeks digging a burrow in the ground, lining it with silk, and building a hinged lid that blends perfectly with the surrounding soil. Then it waits — sometimes for hours, sometimes for days.\n\nWhen an insect walks past and vibrates the ground, the spider explodes out in a fraction of a second — faster than a blink. All that waiting leads to one perfect moment.\n\nThe spider doesn't get frustrated sitting in the dark. It just trusts the process. Scientists who study these spiders say some live in the same burrow for over twenty years, perfecting their craft.\n\nThere's something worth remembering here. Not everything rewards rushing. Some of the best things in life — friendships, skills, understanding — take time to grow. The trap-door spider knows that good things come to those who wait, prepare, and stay ready.",
+    vocabWords: ["burrow", "vibrates", "perfecting"],
+    compHL: ["It spends weeks digging a burrow in the ground, lining it with silk, and building a hinged lid that blends perfectly with the surrounding soil.", "scientists who study these spiders say some live in the same burrow for over twenty years, perfecting their craft.", "When an insect walks past and vibrates the ground, the spider explodes out in a fraction of a second"],
+    inferHL: ["The spider doesn't get frustrated sitting in the dark. It just trusts the process.", "Not everything rewards rushing. Some of the best things in life — friendships, skills, understanding — take time to grow."],
+    questions: [
+      { type:"comp", q:"What does the trap-door spider build to hide its burrow?", choices:["A web made of leaves","A hinged lid made of silk and soil","A pile of sticks","A tunnel through rock"], answer:1, hlIdx:0 },
+      { type:"comp", q:"How fast does the spider strike when prey walks past?", choices:["Within a few minutes","In about one second","In a fraction of a second","After several attempts"], answer:2, hlIdx:2 },
+      { type:"comp", q:"How long can some trap-door spiders live in the same burrow?", choices:["One year","Five years","Over twenty years","Six months"], answer:2, hlIdx:1 },
+      { type:"comp", q:"What does the spider do while waiting in its burrow?", choices:["Spins a new web each day","Stays ready and trusts the process","Hunts underground","Sleeps for weeks"], answer:1, hlIdx:1 },
+      { type:"vocab", q:"What does 'burrow' mean in this passage?", choices:["A spider web","A hole dug in the ground as a home","A hunting method","A type of silk"], answer:1, vocabWord:"burrow" },
+      { type:"vocab", q:"What does 'vibrates' mean when the insect walks past?", choices:["Makes a loud noise","Moves with a shaking motion","Disappears quickly","Leaves a scent"], answer:1, vocabWord:"vibrates" },
+      { type:"vocab", q:"What does 'perfecting' mean here?", choices:["Starting something new","Giving something up","Making something as good as possible","Copying someone"], answer:2, vocabWord:"perfecting" },
+      { type:"infer", q:"Why does the author say the spider 'doesn't get frustrated'?", choices:["Spiders have no feelings","To show patience is a strength","It only waits minutes","It never catches prey"], answer:1, hlIdx:0 },
+      { type:"infer", q:"What life lesson does the spider's story teach?", choices:["Spiders are dangerous","Science is boring","Being patient and prepared leads to success","Waiting is always a waste"], answer:2, hlIdx:1 },
+      { type:"infer", q:"Why does the author compare the spider's patience to building friendships?", choices:["Both involve digging","Good things in life also take time to develop","Friendships form fast","Spiders are social"], answer:1, hlIdx:1 }
+    ]
+  },
+  {
+    id: 2, title: "The Sperm Whale's Deep Dive", theme: "ocean", emoji: "🐋",
+    text: "Sperm whales are the deepest diving animals with a backbone on Earth. They plunge over three kilometres beneath the ocean surface — deeper than most submarines can go — into near total darkness and crushing pressure.\n\nThey hunt giant squid using a remarkable ability called echolocation. They produce rapid clicking sounds that bounce off objects and return as echoes, painting a sound-picture of the dark world around them.\n\nWhat's extraordinary is that sperm whales cannot see in the deep dark. They go anyway. They use a completely different sense — sound — to navigate what their eyes cannot handle.\n\nSometimes in life you'll face situations where you can't clearly see what's ahead. New schools, difficult tasks, unfamiliar challenges. The sperm whale teaches us something important: you don't need perfect vision to move forward bravely. You just need a different way of finding your path.",
+    vocabWords: ["echolocation", "navigate", "extraordinary"],
+    compHL: ["They plunge over three kilometres beneath the ocean surface — deeper than most submarines can go", "They produce rapid clicking sounds that bounce off objects and return as echoes, painting a sound-picture of the dark world around them.", "sperm whales cannot see in the deep dark. They go anyway."],
+    inferHL: ["Sometimes in life you'll face situations where you can't clearly see what's ahead.", "you don't need perfect vision to move forward bravely. You just need a different way of finding your path."],
+    questions: [
+      { type:"comp", q:"How deep can sperm whales dive?", choices:["One kilometre","Over three kilometres","Five hundred metres","Deeper than any animal ever measured"], answer:1, hlIdx:0 },
+      { type:"comp", q:"What do sperm whales hunt in the deep ocean?", choices:["Small fish","Giant squid","Dolphins","Sea turtles"], answer:1, hlIdx:2 },
+      { type:"comp", q:"How do sperm whales 'see' in the dark?", choices:["With very large eyes","By feeling water currents","By using echolocation — clicking sounds that bounce back","By following light from above"], answer:2, hlIdx:1 },
+      { type:"comp", q:"What challenge do sperm whales face in the deep ocean?", choices:["Finding other whales","Near total darkness and crushing pressure","Lack of food","Strong currents"], answer:1, hlIdx:0 },
+      { type:"vocab", q:"What does 'echolocation' mean in this passage?", choices:["A type of whale song","Using sound echoes to detect objects in the dark","A map of the ocean","A diving technique"], answer:1, vocabWord:"echolocation" },
+      { type:"vocab", q:"What does 'navigate' mean here?", choices:["To eat","To sleep deeply","To find your way through a space","To communicate"], answer:2, vocabWord:"navigate" },
+      { type:"vocab", q:"What does 'extraordinary' mean?", choices:["Very ordinary and expected","Extremely impressive or unusual","Slightly interesting","Quite dangerous"], answer:1, vocabWord:"extraordinary" },
+      { type:"infer", q:"Why does the author describe the whale diving into darkness?", choices:["To show whales are scary","To teach that you can be brave even when things are unclear","To explain ocean geography","To show whales are clumsy"], answer:1, hlIdx:0 },
+      { type:"infer", q:"What does the whale using sound instead of sight suggest about problem-solving?", choices:["You should give up if one sense fails","There is often more than one way to solve a problem","Sound is always better than sight","Problems underwater are easier"], answer:1, hlIdx:1 },
+      { type:"infer", q:"What kind of 'new schools or challenges' might the author be hinting at for the reader?", choices:["Learning to swim","Facing scary or uncertain situations in your own life","Diving deep underwater","Studying whale biology"], answer:1, hlIdx:1 }
+    ]
+  },
+  {
+    id: 3, title: "Ants That Farm", theme: "insect", emoji: "🐜",
+    text: "Leafcutter ants are farmers. They don't eat the leaves they carry — they use them to grow fungus, which is their actual food. Each ant in the colony has a job. Some cut leaves, some carry them, some guard the trail, and some tend the underground fungus gardens.\n\nThe colony can contain millions of ants, yet everything runs smoothly because each ant does its part without needing to be told.\n\nIf one group of ants fails, others adjust. If a trail is blocked, scouts find a new route within minutes. The colony is incredibly good at solving problems together.\n\nTeams work like this too — in sports, classrooms, and families. No single person can do everything alone. When everyone contributes their strength, even hard problems become manageable. And when something goes wrong, the best response isn't panic — it's quietly figuring out a new route forward.",
+    vocabWords: ["colony", "tend", "scouts"],
+    compHL: ["They don't eat the leaves they carry — they use them to grow fungus, which is their actual food.", "Some cut leaves, some carry them, some guard the trail, and some tend the underground fungus gardens.", "If a trail is blocked, scouts find a new route within minutes."],
+    inferHL: ["No single person can do everything alone. When everyone contributes their strength, even hard problems become manageable.", "when something goes wrong, the best response isn't panic — it's quietly figuring out a new route forward."],
+    questions: [
+      { type:"comp", q:"What do leafcutter ants actually eat?", choices:["The leaves they cut","Fungus grown from the leaves","Other insects","Tree sap"], answer:1, hlIdx:0 },
+      { type:"comp", q:"Which ants guard the trail in a leafcutter colony?", choices:["The leaf cutters","The fungus farmers","Guard ants","The scouts"], answer:2, hlIdx:1 },
+      { type:"comp", q:"How quickly do scouts find a new route if a trail is blocked?", choices:["After a full day","Within a few hours","Within minutes","They give up"], answer:2, hlIdx:2 },
+      { type:"comp", q:"How big can a leafcutter ant colony be?", choices:["Hundreds","Thousands","Millions","Billions"], answer:2, hlIdx:0 },
+      { type:"vocab", q:"What does 'colony' mean in this passage?", choices:["A type of leaf","A large organised group living and working together","A fungus garden","A trail through the forest"], answer:1, vocabWord:"colony" },
+      { type:"vocab", q:"What does 'tend' mean when the ants tend the fungus gardens?", choices:["Destroy","Look after and care for","Ignore","Eat"], answer:1, vocabWord:"tend" },
+      { type:"vocab", q:"What are 'scouts' in this passage?", choices:["Ants that cut leaves","Ants that search ahead and find new paths","Ants that grow fungus","Baby ants"], answer:1, vocabWord:"scouts" },
+      { type:"infer", q:"Why do you think the ants don't need to be told what to do?", choices:["They are robots","Each ant instinctively knows its role in the team","They follow a written list","One ant gives orders"], answer:1, hlIdx:0 },
+      { type:"infer", q:"What does the author suggest is the best response when something goes wrong?", choices:["Panic and stop working","Blame others","Calmly find a new way forward","Give up immediately"], answer:2, hlIdx:1 },
+      { type:"infer", q:"How is a leafcutter ant colony similar to a sports team?", choices:["Both live underground","Both have millions of members","Both work best when everyone does their part","Both eat fungus"], answer:2, hlIdx:0 }
+    ]
+  },
+  {
+    id: 4, title: "The Mimic Octopus", theme: "ocean", emoji: "🐙",
+    text: "The mimic octopus is one of the ocean's greatest tricksters. Found in the tropical waters of Southeast Asia, it can change not just its colour, but its shape and behaviour — impersonating over fifteen different sea creatures.\n\nWhen threatened by a fish that fears lionfish, the mimic octopus flattens its arms and changes colour to look exactly like one. When faced by a different predator, it transforms into a flatfish gliding across the seafloor.\n\nThe mimic octopus doesn't have a shell or venom to protect it. Its only defence is its remarkable ability to adapt — to become something new depending on what the situation demands.\n\nAdapting isn't pretending to be someone you're not. It's being smart enough to respond differently to different situations. Knowing when to be bold and when to be quiet, when to try a different approach — that's a superpower in the real world too.",
+    vocabWords: ["impersonating", "predator", "adapt"],
+    compHL: ["it can change not just its colour, but its shape and behaviour — impersonating over fifteen different sea creatures.", "The mimic octopus doesn't have a shell or venom to protect it.", "When threatened by a fish that fears lionfish, the mimic octopus flattens its arms and changes colour to look exactly like one."],
+    inferHL: ["Its only defence is its remarkable ability to adapt — to become something new depending on what the situation demands.", "Knowing when to be bold and when to be quiet, when to try a different approach — that's a superpower in the real world too."],
+    questions: [
+      { type:"comp", q:"Where is the mimic octopus found?", choices:["Arctic waters","Tropical waters of Southeast Asia","The Mediterranean Sea","Rivers in South America"], answer:1, hlIdx:0 },
+      { type:"comp", q:"How many sea creatures can the mimic octopus impersonate?", choices:["Five","Ten","Over fifteen","Over fifty"], answer:2, hlIdx:0 },
+      { type:"comp", q:"What does the mimic octopus NOT have to protect itself?", choices:["Colour-changing ability","A shell or venom","The ability to move fast","Eight arms"], answer:1, hlIdx:1 },
+      { type:"comp", q:"What does the octopus do when threatened by a fish that fears lionfish?", choices:["Swims away quickly","Hides in the sand","Flattens its arms and mimics a lionfish","Sprays ink"], answer:2, hlIdx:2 },
+      { type:"vocab", q:"What does 'impersonating' mean in this passage?", choices:["Attacking another animal","Copying the appearance of something else","Swimming backwards","Hiding in a shell"], answer:1, vocabWord:"impersonating" },
+      { type:"vocab", q:"What is a 'predator'?", choices:["An animal that is hunted","An animal that hunts other animals","A type of ocean plant","A mimic creature"], answer:1, vocabWord:"predator" },
+      { type:"vocab", q:"What does 'adapt' mean in this passage?", choices:["Give up when things are hard","Change to suit a new situation","Stay exactly the same","Run away"], answer:1, vocabWord:"adapt" },
+      { type:"infer", q:"Why is the mimic octopus's ability so impressive given it has no shell or venom?", choices:["It means octopuses are weak","It shows that intelligence and adaptability can replace physical weapons","Shells are useless anyway","All octopuses can do this"], answer:1, hlIdx:1 },
+      { type:"infer", q:"What does the author mean when they say adapting is a 'superpower in the real world'?", choices:["You should pretend to be someone else","Being able to change your approach in different situations is very valuable","Magic powers are real","Only octopuses can adapt"], answer:1, hlIdx:1 },
+      { type:"infer", q:"Why might knowing 'when to be bold and when to be quiet' be useful for a person?", choices:["Because silence is always best","Because different situations need different responses","Because being loud always works","Because it impresses teachers"], answer:1, hlIdx:1 }
+    ]
+  },
+  {
+    id: 5, title: "Fireflies and Their Secret Code", theme: "insect", emoji: "✨",
+    text: "On warm summer nights, fireflies turn meadows into living light shows. Each species of firefly has its own pattern of flashes — a private code used to find a mate. Some flash once every two seconds. Others create long glowing pulses. A few flash in perfect synchrony, entire trees blinking on and off together like a natural disco.\n\nThe light is created by a chemical reaction inside the firefly's abdomen — almost no heat is produced, making it one of the most efficient light sources in nature. Scientists have studied this reaction to improve LED technology and medical equipment.\n\nFireflies remind us that communication comes in many forms. Not everyone expresses themselves the same way — some people are quiet flashers, some are long and slow, some light up rooms with big energy. None of these is wrong. Each pattern has its place, and the right signal will always find the right receiver.",
+    vocabWords: ["synchrony", "efficient", "expresses"],
+    compHL: ["Each species of firefly has its own pattern of flashes — a private code used to find a mate.", "The light is created by a chemical reaction inside the firefly's abdomen — almost no heat is produced", "Scientists have studied this reaction to improve LED technology and medical equipment."],
+    inferHL: ["Not everyone expresses themselves the same way — some people are quiet flashers, some are long and slow, some light up rooms with big energy.", "Each pattern has its place, and the right signal will always find the right receiver."],
+    questions: [
+      { type:"comp", q:"What is the purpose of a firefly's flash pattern?", choices:["To scare predators","To find a mate","To light up their path","To warn other insects"], answer:1, hlIdx:0 },
+      { type:"comp", q:"Where in the firefly's body is the light produced?", choices:["Its head","Its wings","Its abdomen","Its legs"], answer:2, hlIdx:1 },
+      { type:"comp", q:"What have scientists used the firefly's light reaction to improve?", choices:["Solar panels and cameras","LED technology and medical equipment","Car headlights and phones","Fireworks and lasers"], answer:1, hlIdx:2 },
+      { type:"comp", q:"What do some firefly species do that looks like a natural disco?", choices:["Flash in many colours","Flash in perfect synchrony so whole trees blink together","Flash only at sunrise","Fly in circle patterns"], answer:1, hlIdx:0 },
+      { type:"vocab", q:"What does 'synchrony' mean in this passage?", choices:["Flashing randomly","Moving at different speeds","Happening at the same time in a coordinated way","A type of chemical"], answer:2, vocabWord:"synchrony" },
+      { type:"vocab", q:"What does 'efficient' mean when describing the firefly's light?", choices:["Very bright","Producing results without wasting energy","Very colourful","Extremely hot"], answer:1, vocabWord:"efficient" },
+      { type:"vocab", q:"What does 'expresses' mean in the final paragraph?", choices:["Hides feelings","Shows or communicates thoughts and feelings","Runs away","Copies others"], answer:1, vocabWord:"expresses" },
+      { type:"infer", q:"Why do you think the author says 'none of these is wrong' about different communication styles?", choices:["To say all fireflies are the same","To suggest that different ways of expressing yourself are all valid","To criticise quiet people","To show that flashing is always best"], answer:1, hlIdx:0 },
+      { type:"infer", q:"What might 'the right signal will always find the right receiver' mean for people?", choices:["You should flash lights at friends","The right people will understand and appreciate how you communicate","You need to be louder","Only one communication style works"], answer:1, hlIdx:1 },
+      { type:"infer", q:"Why do you think scientists were interested in a light source that produces almost no heat?", choices:["They wanted to study insects","Because it could be safer and more energy-saving than heat-producing lights","Because heat is dangerous to fireflies","They wanted to make fireworks"], answer:1, hlIdx:1 }
+    ]
+  },
+  {
+    id: 6, title: "The Mantis Shrimp's Super Vision", theme: "ocean", emoji: "🦐",
+    text: "Humans have three types of colour receptors in their eyes — enough to see millions of colours. The mantis shrimp has sixteen. Scientists used to assume this meant mantis shrimp could see more colours than any creature alive. They were surprised to discover the shrimp actually processes colour very differently — faster and more efficiently, rather than seeing more shades.\n\nThe mantis shrimp also has one of the most powerful punches in the animal kingdom. Its club-like claws strike with the speed of a bullet, creating a shockwave that can stun or kill prey even without direct contact.\n\nHere is a creature that sees the world completely differently to us, and strikes problems head on. It doesn't wait to be noticed. It has found its own extraordinary way of being in the world.\n\nYou don't have to experience things the same way as everyone else to be remarkable. Different ways of seeing and doing are often what the world needs most.",
+    vocabWords: ["receptors", "efficiently", "extraordinary"],
+    compHL: ["Humans have three types of colour receptors in their eyes. The mantis shrimp has sixteen.", "Its club-like claws strike with the speed of a bullet, creating a shockwave that can stun or kill prey even without direct contact.", "Scientists used to assume this meant mantis shrimp could see more colours than any creature alive."],
+    inferHL: ["You don't have to experience things the same way as everyone else to be remarkable.", "Different ways of seeing and doing are often what the world needs most."],
+    questions: [
+      { type:"comp", q:"How many colour receptors does a mantis shrimp have?", choices:["Three","Eight","Twelve","Sixteen"], answer:3, hlIdx:0 },
+      { type:"comp", q:"What surprised scientists about the mantis shrimp's colour vision?", choices:["It was completely blind","It saw fewer colours than humans","It processed colour faster rather than seeing more shades","It only saw in black and white"], answer:2, hlIdx:2 },
+      { type:"comp", q:"What can the mantis shrimp's punch do without directly hitting prey?", choices:["Create a sound signal","Create a shockwave that can stun or kill","Spray ink","Produce a flash of light"], answer:1, hlIdx:1 },
+      { type:"comp", q:"How fast do the mantis shrimp's claws strike?", choices:["Slowly and precisely","At the speed of a bullet","Faster than light","At the speed of a swimming fish"], answer:1, hlIdx:1 },
+      { type:"vocab", q:"What are 'receptors' in this passage?", choices:["Types of food","Cells that detect and respond to signals like colour","A type of shrimp","Ocean currents"], answer:1, vocabWord:"receptors" },
+      { type:"vocab", q:"What does 'efficiently' mean in this passage?", choices:["Very slowly","In a way that wastes a lot of energy","In a way that works well without wasting effort","Very loudly"], answer:2, vocabWord:"efficiently" },
+      { type:"vocab", q:"What does 'extraordinary' mean?", choices:["Completely ordinary","Very usual and expected","Remarkably impressive and unusual","Slightly better than average"], answer:2, vocabWord:"extraordinary" },
+      { type:"infer", q:"Why do you think scientists were surprised by the mantis shrimp's vision?", choices:["They expected it to be blind","They assumed more receptors meant seeing more colours, but it worked differently","They had never seen a shrimp before","They thought shrimp didn't have eyes"], answer:1, hlIdx:0 },
+      { type:"infer", q:"What does the author mean when they say the shrimp 'has found its own extraordinary way of being in the world'?", choices:["It is showing off","It has developed unique strengths that work for it","It copies other animals","It always wins fights"], answer:1, hlIdx:1 },
+      { type:"infer", q:"How might the mantis shrimp's story apply to someone who learns differently to others?", choices:["It doesn't apply at all","It suggests that a different approach can still be powerful and valuable","It means they should try harder to be normal","It means they need better eyes"], answer:1, hlIdx:1 }
+    ]
+  },
+  {
+    id: 7, title: "Monarch Butterflies: The Great Migration", theme: "insect", emoji: "🦋",
+    text: "Every year, monarch butterflies complete one of the most astonishing journeys in the natural world. They travel up to four thousand kilometres from Canada to Mexico — navigating using the sun, the Earth's magnetic field, and an internal clock that adjusts for the time of day.\n\nWhat makes this even more remarkable is that no single butterfly completes a round trip. The butterflies that arrive in Mexico are the great-grandchildren of those that left. The knowledge of where to go is somehow encoded in their biology — passed on without teaching.\n\nThink about that. These butterflies carry inherited wisdom they never had to be told. They know what to do even before they've done it.\n\nSome of what you know about yourself — your kindness, your curiosity, your strength — might also be something you were born with, something carried forward. Understanding yourself is partly about discovering what's already there.",
+    vocabWords: ["astonishing", "navigating", "inherited"],
+    compHL: ["They travel up to four thousand kilometres from Canada to Mexico", "The butterflies that arrive in Mexico are the great-grandchildren of those that left.", "navigating using the sun, the Earth's magnetic field, and an internal clock that adjusts for the time of day."],
+    inferHL: ["These butterflies carry inherited wisdom they never had to be told.", "Some of what you know about yourself — your kindness, your curiosity, your strength — might also be something you were born with."],
+    questions: [
+      { type:"comp", q:"How far do monarch butterflies travel during migration?", choices:["Four hundred kilometres","One thousand kilometres","Up to four thousand kilometres","Around the world"], answer:2, hlIdx:0 },
+      { type:"comp", q:"What tools do monarchs use to navigate?", choices:["Wind patterns and smell","The sun, magnetic field, and an internal clock","Star positions and moonlight","Temperature and rainfall"], answer:1, hlIdx:2 },
+      { type:"comp", q:"Which butterflies arrive in Mexico?", choices:["The same ones that left Canada","Their children","Their great-grandchildren","A different species"], answer:2, hlIdx:1 },
+      { type:"comp", q:"How do the butterflies 'know' where to go?", choices:["They follow older butterflies","They are guided by humans","The knowledge is encoded in their biology","They follow rivers south"], answer:2, hlIdx:1 },
+      { type:"vocab", q:"What does 'astonishing' mean in this passage?", choices:["Quite ordinary","Very surprising and impressive","Slightly interesting","Quite slow"], answer:1, vocabWord:"astonishing" },
+      { type:"vocab", q:"What does 'navigating' mean?", choices:["Sleeping during travel","Finding and following a route","Eating during a journey","Communicating with others"], answer:1, vocabWord:"navigating" },
+      { type:"vocab", q:"What does 'inherited' mean in this passage?", choices:["Learned from a teacher","Bought or traded","Passed down from ancestors through biology","Discovered by accident"], answer:2, vocabWord:"inherited" },
+      { type:"infer", q:"Why is it remarkable that no butterfly completes a round trip?", choices:["Because they fly very slowly","Because it means the knowledge must be biological, not learned","Because butterflies have poor memory","Because Mexico is very cold"], answer:1, hlIdx:1 },
+      { type:"infer", q:"What does the author suggest about your own qualities like kindness and curiosity?", choices:["They are not real","You have to be taught all of them","Some might be naturally part of who you are","They must be earned through hard work only"], answer:2, hlIdx:1 },
+      { type:"infer", q:"What lesson about identity might the monarch butterfly's story be teaching?", choices:["You are nothing without training","Part of who you are is already within you, waiting to be discovered","You should always follow others","Migration is the most important thing in nature"], answer:1, hlIdx:1 }
+    ]
+  },
+  {
+    id: 8, title: "The Pistol Shrimp's Sound Weapon", theme: "ocean", emoji: "🔫",
+    text: "The pistol shrimp is tiny — usually less than five centimetres long. But it produces one of the loudest sounds in the ocean, louder than a gunshot, by snapping its claw so fast it creates a bubble of superheated plasma.\n\nFor a fraction of a second, that bubble reaches temperatures close to the surface of the sun. It collapses almost instantly, releasing a shockwave that stuns prey. The whole event is over faster than you can imagine.\n\nThis creature is so small you could hold it in your palm. Yet it creates something that briefly matches the temperature of a star.\n\nDon't judge something — or someone — by size alone. The smallest voices sometimes carry the most force. The quietest people in a room are sometimes the ones with the biggest ideas. Big things can come from unexpected places, and the world is full of surprises if you stay curious enough to notice them.",
+    vocabWords: ["plasma", "shockwave", "releases"],
+    compHL: ["it produces one of the loudest sounds in the ocean, louder than a gunshot, by snapping its claw so fast it creates a bubble of superheated plasma.", "that bubble reaches temperatures close to the surface of the sun.", "The pistol shrimp is tiny — usually less than five centimetres long."],
+    inferHL: ["Don't judge something — or someone — by size alone.", "The smallest voices sometimes carry the most force. The quietest people in a room are sometimes the ones with the biggest ideas."],
+    questions: [
+      { type:"comp", q:"How big is a pistol shrimp?", choices:["About 50 centimetres","Less than five centimetres","About the size of a hand","About 20 centimetres"], answer:1, hlIdx:2 },
+      { type:"comp", q:"How does the pistol shrimp create its powerful shockwave?", choices:["By screaming","By snapping its claw so fast it creates a superheated plasma bubble","By slamming its tail","By releasing venom"], answer:1, hlIdx:0 },
+      { type:"comp", q:"What temperature does the bubble reach?", choices:["Hotter than boiling water","Close to the surface of the sun","The same as a car engine","About fifty degrees"], answer:1, hlIdx:1 },
+      { type:"comp", q:"What happens to the plasma bubble?", choices:["It stays for minutes","It slowly fades away","It collapses almost instantly, releasing a shockwave","It rises to the surface"], answer:2, hlIdx:0 },
+      { type:"vocab", q:"What is 'plasma' in this passage?", choices:["A type of seawater","A blood type","A superheated state of matter","A sound wave"], answer:2, vocabWord:"plasma" },
+      { type:"vocab", q:"What is a 'shockwave'?", choices:["A gentle current of water","A powerful wave of pressure from an explosion or impact","A type of sound only fish hear","The shrimp's claw"], answer:1, vocabWord:"shockwave" },
+      { type:"vocab", q:"What does 'releases' mean in this passage?", choices:["Traps or holds something","Lets something out or sets it free","Makes something bigger","Creates something new"], answer:1, vocabWord:"releases" },
+      { type:"infer", q:"Why do you think the author tells us the shrimp is small before revealing its power?", choices:["To confuse the reader","To make the contrast more surprising and meaningful","Because size is the main topic","To show shrimp are not important"], answer:1, hlIdx:2 },
+      { type:"infer", q:"What might the author mean by 'the smallest voices sometimes carry the most force'?", choices:["Quiet people should shout more","People who seem small or quiet can have powerful ideas or impact","Only loud voices matter","Small people are always strong"], answer:1, hlIdx:1 },
+      { type:"infer", q:"What does 'stay curious enough to notice them' suggest you should do?", choices:["Only pay attention to big, obvious things","Always look carefully — surprising things are often hidden in unexpected places","Carry a magnifying glass everywhere","Study shrimp for a career"], answer:1, hlIdx:1 }
+    ]
+  },
+  {
+    id: 9, title: "The Dung Beetle's Stars", theme: "insect", emoji: "⭐",
+    text: "Dung beetles navigate by starlight. They are the only insects known to use the Milky Way to find their direction. On a clear night, a dung beetle will stop, look up at the sky, and use the band of our galaxy to walk in a perfectly straight line.\n\nThey roll balls of dung that can weigh fifty times more than they do — carrying something enormous relative to their body. If they wander off course, another beetle might steal their ball. So staying straight matters.\n\nScientists proved this by fitting tiny cardboard hats to beetles so they couldn't see the sky. The hatted beetles wandered in circles. The ones who could see the Milky Way stayed perfectly on track.\n\nFinding your direction in life can feel hard. But everyone has something they can orient themselves by — values, people they trust, things they care about. Like the dung beetle, look up sometimes. Find your own version of the stars to guide you.",
+    vocabWords: ["navigate", "orient", "relative"],
+    compHL: ["They are the only insects known to use the Milky Way to find their direction.", "They roll balls of dung that can weigh fifty times more than they do", "Scientists proved this by fitting tiny cardboard hats to beetles so they couldn't see the sky."],
+    inferHL: ["Finding your direction in life can feel hard. But everyone has something they can orient themselves by — values, people they trust, things they care about.", "Find your own version of the stars to guide you."],
+    questions: [
+      { type:"comp", q:"What do dung beetles use to navigate?", choices:["The position of the moon","The Milky Way starlight","Smell and touch","The position of the sun"], answer:1, hlIdx:0 },
+      { type:"comp", q:"How heavy are the dung balls the beetles roll, compared to their body?", choices:["The same weight as them","Ten times their weight","Fifty times their weight","A hundred times their weight"], answer:2, hlIdx:1 },
+      { type:"comp", q:"What happened to the beetles wearing cardboard hats in the experiment?", choices:["They moved faster","They rolled larger balls","They wandered in circles","They refused to move"], answer:2, hlIdx:2 },
+      { type:"comp", q:"Why does it matter that dung beetles walk in a straight line?", choices:["To reach water faster","To impress other beetles","So other beetles don't steal their dung ball","Because circles waste energy"], answer:2, hlIdx:1 },
+      { type:"vocab", q:"What does 'navigate' mean in this passage?", choices:["To eat","To sleep","To find and follow a direction or route","To communicate"], answer:2, vocabWord:"navigate" },
+      { type:"vocab", q:"What does 'orient' mean in the final paragraph?", choices:["To get lost","To face or align yourself in a particular direction","To copy others","To rest"], answer:1, vocabWord:"orient" },
+      { type:"vocab", q:"What does 'relative' mean in 'fifty times their body weight relative to their body'?", choices:["A family member","Compared to something else","Approximately","Very heavy"], answer:1, vocabWord:"relative" },
+      { type:"infer", q:"Why do you think scientists used cardboard hats instead of just turning off the stars?", choices:["They thought it looked funny","Because you can't turn off real stars — it was the only way to block the beetle's view","They wanted to confuse the beetles","Cardboard makes beetles stronger"], answer:1, hlIdx:2 },
+      { type:"infer", q:"What is the author's 'own version of the stars' really referring to for a person?", choices:["Actually watching the Milky Way","Things in your life that give you direction, like values or trusted people","A compass or GPS","Your favourite constellation"], answer:1, hlIdx:1 },
+      { type:"infer", q:"Why might the author have chosen a dung beetle — not a majestic animal — to make this point?", choices:["Dung beetles are the author's favourite","To show that wisdom and strength can come from the most unlikely places","Because dung beetles are very famous","To disgust the reader"], answer:1, hlIdx:1 }
+    ]
+  },
+  {
+    id: 10, title: "Whale Songs Across the Ocean", theme: "ocean", emoji: "🎵",
+    text: "Humpback whales sing some of the longest and most complex songs in the animal kingdom. A single song can last up to twenty minutes and be repeated for hours. All the male humpbacks in one ocean sing the same song — and the song evolves, changing slightly over months until it sounds completely different from where it began.\n\nThese songs travel thousands of kilometres through deep ocean channels, reaching whales on the other side of a vast sea. Scientists believe they are used to attract mates, but their full meaning is still not completely understood.\n\nThere is something quietly wonderful about the idea of a song spreading across an ocean — changing as it travels, touching others in ways the singer will never know.\n\nThe things you say and do have effects you might not always see. A kind word, a small act of help — like a whale song, they can travel further than you expect, and change things in ways you'll never fully know.",
+    vocabWords: ["complex", "evolves", "vast"],
+    compHL: ["A single song can last up to twenty minutes and be repeated for hours.", "All the male humpbacks in one ocean sing the same song — and the song evolves, changing slightly over months", "These songs travel thousands of kilometres through deep ocean channels"],
+    inferHL: ["The things you say and do have effects you might not always see.", "A kind word, a small act of help — like a whale song, they can travel further than you expect."],
+    questions: [
+      { type:"comp", q:"How long can a single humpback whale song last?", choices:["One minute","Up to twenty minutes","About an hour","Only a few seconds"], answer:1, hlIdx:0 },
+      { type:"comp", q:"Who sings the same song in one ocean?", choices:["All humpback whales","Only female humpbacks","All male humpbacks in that ocean","Baby whales"], answer:2, hlIdx:1 },
+      { type:"comp", q:"How far can whale songs travel?", choices:["A few kilometres","Hundreds of kilometres","Thousands of kilometres","Only within a bay"], answer:2, hlIdx:2 },
+      { type:"comp", q:"What happens to the humpback whale song over time?", choices:["It stays exactly the same","It gets shorter and simpler","It evolves and changes until it sounds completely different","It is forgotten"], answer:2, hlIdx:1 },
+      { type:"vocab", q:"What does 'complex' mean when describing whale songs?", choices:["Very short","Simple and easy to understand","Made up of many complicated parts","Very quiet"], answer:2, vocabWord:"complex" },
+      { type:"vocab", q:"What does 'evolves' mean in this passage?", choices:["Disappears","Stays the same","Gets louder","Gradually changes over time"], answer:3, vocabWord:"evolves" },
+      { type:"vocab", q:"What does 'vast' mean in 'across a vast sea'?", choices:["Shallow","Extremely large","Frozen","Dangerous"], answer:1, vocabWord:"vast" },
+      { type:"infer", q:"Why do you think the author says it's 'quietly wonderful' that a song spreads across an ocean?", choices:["Because oceans are quiet places","Because it is a beautiful and meaningful idea — something travelling and connecting others unseen","Because whales are quiet animals","Because songs are not real"], answer:1, hlIdx:1 },
+      { type:"infer", q:"What does the author compare a kind word to?", choices:["A whale's tail","A deep ocean channel","A whale song that travels far and affects others","A twenty-minute speech"], answer:2, hlIdx:1 },
+      { type:"infer", q:"What might 'effects you might not always see' mean in real life?", choices:["You are invisible","You can't see very well","Your actions can help or affect people in ways you never know about","Effects are imaginary"], answer:2, hlIdx:0 }
+    ]
+  },
+{
+    id: 11, title: "The Bombardier Beetle's Chemical Weapon", theme: "insect", emoji: "💥",
+    text: "The bombardier beetle has one of the most sophisticated defence systems in the insect world. When threatened, it mixes two chemicals stored in separate chambers inside its body. The reaction is so powerful it produces a boiling hot spray — nearly 100 degrees Celsius — that it fires from its rear end with a popping sound.\n\nThe beetle can aim this spray in almost any direction. It can fire up to twenty times before running out of chemicals, and the spray can deter predators as large as frogs and birds.\n\nWhat's fascinating is that the chemicals are harmless on their own. Only when they combine does the reaction happen. Many things in life are like that — one ingredient alone isn't enough. Skills, effort, and the right moment all coming together can create something remarkable.\n\nYou don't have to have everything figured out at once. Build your ingredients, one by one. When they come together, something powerful can happen.",
+    vocabWords: ["sophisticated", "deter", "combine"],
+    compHL: ["it mixes two chemicals stored in separate chambers inside its body", "it fires from its rear end with a popping sound", "The beetle can aim this spray in almost any direction. It can fire up to twenty times"],
+    inferHL: ["the chemicals are harmless on their own. Only when they combine does the reaction happen.", "Skills, effort, and the right moment all coming together can create something remarkable."],
+    questions: [
+      { type:"comp", q:"What does the bombardier beetle do when threatened?", choices:["Plays dead","Mixes two chemicals to create a boiling hot spray","Releases a bad smell","Flies away"], answer:1, hlIdx:0 },
+      { type:"comp", q:"How hot is the spray the beetle fires?", choices:["About 30 degrees","Around 60 degrees","Nearly 100 degrees Celsius","Over 200 degrees"], answer:2, hlIdx:0 },
+      { type:"comp", q:"How many times can the beetle fire before running out?", choices:["Three times","Ten times","Up to twenty times","Only once"], answer:2, hlIdx:2 },
+      { type:"comp", q:"What predators can the spray deter?", choices:["Only small insects","Animals as large as frogs and birds","Only mice","Any animal"], answer:1, hlIdx:2 },
+      { type:"vocab", q:"What does 'sophisticated' mean in this passage?", choices:["Simple and basic","Highly developed and complex","Dangerous and loud","Very small"], answer:1, vocabWord:"sophisticated" },
+      { type:"vocab", q:"What does 'deter' mean?", choices:["Attract or invite","Help or support","Discourage or stop from doing something","Confuse completely"], answer:2, vocabWord:"deter" },
+      { type:"vocab", q:"What does 'combine' mean in this passage?", choices:["Separate into parts","Come together to mix","Disappear completely","Stay apart"], answer:1, vocabWord:"combine" },
+      { type:"infer", q:"Why is it important that the chemicals are kept in separate chambers?", choices:["To make them easier to aim","To stop the dangerous reaction happening until the beetle needs it","To cool them down","To hide them from predators"], answer:1, hlIdx:0 },
+      { type:"infer", q:"What does the author mean when they compare the beetle's chemicals to 'skills, effort, and the right moment'?", choices:["You need chemistry skills","You need all the right elements to come together to create success","Chemistry is important in school","You should store your energy"], answer:1, hlIdx:1 },
+      { type:"infer", q:"Why might the author say 'you don't have to have everything figured out at once'?", choices:["To say school doesn't matter","To reassure that building skills gradually is enough","To suggest giving up is fine","To encourage rushing"], answer:1, hlIdx:1 }
+    ]
+  },
+  {
+    id: 12, title: "The Blue Whale: Biggest Animal Ever", theme: "ocean", emoji: "🐳",
+    text: "The blue whale is the largest animal ever known to have lived on Earth — bigger than any dinosaur. An adult blue whale can reach 30 metres in length and weigh as much as 200 tonnes. Its heart is the size of a small car, and its arteries are so wide a human could crawl through them.\n\nDespite its size, the blue whale feeds almost entirely on krill — tiny shrimp-like creatures less than six centimetres long. A blue whale eats up to four tonnes of krill each day.\n\nThe biggest creature on Earth survives by eating some of the smallest. Size isn't everything. Sometimes the things that sustain us and keep us going aren't the huge dramatic moments — they're the small, consistent things. Regular sleep, a good meal, a kind word from someone you trust. Small things, gathered in great enough numbers, make a great life.",
+    vocabWords: ["arteries", "sustain", "consistent"],
+    compHL: ["The blue whale is the largest animal ever known to have lived on Earth — bigger than any dinosaur.", "A blue whale eats up to four tonnes of krill each day.", "Its heart is the size of a small car, and its arteries are so wide a human could crawl through them."],
+    inferHL: ["The biggest creature on Earth survives by eating some of the smallest.", "the things that sustain us and keep us going aren't the huge dramatic moments — they're the small, consistent things."],
+    questions: [
+      { type:"comp", q:"How long can an adult blue whale grow?", choices:["10 metres","20 metres","30 metres","50 metres"], answer:2, hlIdx:0 },
+      { type:"comp", q:"How big is a blue whale's heart?", choices:["The size of a basketball","The size of a small car","The size of a house","The size of a football"], answer:1, hlIdx:2 },
+      { type:"comp", q:"What does a blue whale mainly eat?", choices:["Large fish","Dolphins","Giant squid","Krill — tiny shrimp-like creatures"], answer:3, hlIdx:1 },
+      { type:"comp", q:"How much krill does a blue whale eat each day?", choices:["One tonne","Two tonnes","Four tonnes","Ten tonnes"], answer:2, hlIdx:1 },
+      { type:"vocab", q:"What are 'arteries' in this passage?", choices:["The whale's bones","Tubes that carry blood through the body","Parts of the whale's ear","The whale's fins"], answer:1, vocabWord:"arteries" },
+      { type:"vocab", q:"What does 'sustain' mean in the final paragraph?", choices:["Damage or hurt","Keep something going or alive over time","Excite or thrill","Confuse or distract"], answer:1, vocabWord:"sustain" },
+      { type:"vocab", q:"What does 'consistent' mean here?", choices:["Happening only once","Very exciting","Happening regularly over time","Getting bigger each time"], answer:2, vocabWord:"consistent" },
+      { type:"infer", q:"Why do you think the author mentions the blue whale is bigger than any dinosaur?", choices:["To talk about palaeontology","To help the reader understand just how enormous it is","Because dinosaurs are the author's favourite","Because dinosaurs ate krill too"], answer:1, hlIdx:0 },
+      { type:"infer", q:"What does 'small things, gathered in great enough numbers, make a great life' suggest?", choices:["You should collect small objects","Big dramatic events are what matter most","Consistent small positive actions build a good life over time","Whales understand life better than people"], answer:2, hlIdx:1 },
+      { type:"infer", q:"Why might the fact that the biggest animal eats the tiniest creatures be meaningful to a person?", choices:["It shows krill are dangerous","It teaches that strength doesn't always need big or dramatic fuel — small consistent things are enough","It proves size isn't related to diet","It means people should eat more shrimp"], answer:1, hlIdx:0 }
+    ]
+  },
+  {
+    id: 13, title: "Termites: Master Builders", theme: "insect", emoji: "🏗️",
+    text: "Termite mounds are engineering marvels. Some African termite mounds reach nine metres tall — taller than a two-storey house — and remain standing for decades. Inside, termites maintain a constant temperature of around 30 degrees Celsius, even when outside temperatures swing wildly from freezing nights to scorching days.\n\nThey do this with a network of tunnels that act like lungs — drawing cool air in from below and releasing hot air from the top. This design has inspired human architects who have copied the system to air-condition buildings without electricity.\n\nNot one termite designed this. No termite has a blueprint. The mound emerges from millions of small decisions made by individual insects responding to their environment.\n\nSometimes great things aren't planned from the start — they grow. Your understanding of yourself, your goals, your friendships — these don't need a perfect plan from day one. They build, organically, when you keep showing up and doing your part.",
+    vocabWords: ["marvels", "constant", "organically"],
+    compHL: ["Some African termite mounds reach nine metres tall", "termites maintain a constant temperature of around 30 degrees Celsius", "This design has inspired human architects who have copied the system to air-condition buildings without electricity."],
+    inferHL: ["Not one termite designed this. No termite has a blueprint. The mound emerges from millions of small decisions.", "great things aren't planned from the start — they grow."],
+    questions: [
+      { type:"comp", q:"How tall can some African termite mounds grow?", choices:["Three metres","Six metres","Nine metres","Fifteen metres"], answer:2, hlIdx:0 },
+      { type:"comp", q:"What temperature do termites maintain inside their mound?", choices:["Around 20 degrees","Around 30 degrees Celsius","Around 40 degrees","Exactly the outside temperature"], answer:1, hlIdx:1 },
+      { type:"comp", q:"What has the termite mound's design inspired humans to do?", choices:["Build taller skyscrapers","Create stronger concrete","Air-condition buildings without electricity","Design better roads"], answer:2, hlIdx:2 },
+      { type:"comp", q:"How do the tunnels in a termite mound work?", choices:["Like a river system","Like lungs — drawing cool air in and releasing hot air","Like a maze with dead ends","Like a water pump"], answer:1, hlIdx:2 },
+      { type:"vocab", q:"What does 'marvels' mean in 'engineering marvels'?", choices:["Problems or failures","Things that are dangerous","Things that cause amazement and wonder","Simple basic structures"], answer:2, vocabWord:"marvels" },
+      { type:"vocab", q:"What does 'constant' mean when describing the temperature?", choices:["Very high","Changing all the time","Staying the same without change","Difficult to measure"], answer:2, vocabWord:"constant" },
+      { type:"vocab", q:"What does 'organically' mean in the final paragraph?", choices:["Made from chemicals","Naturally, without being forced or planned from the start","Very quickly","In a laboratory"], answer:1, vocabWord:"organically" },
+      { type:"infer", q:"Why is it significant that no single termite planned the mound?", choices:["It shows termites are unintelligent","It shows that great outcomes can come from many small contributions without one master plan","It means the mounds are weak","It proves insects are better than humans"], answer:1, hlIdx:1 },
+      { type:"infer", q:"What does the author suggest about needing a 'perfect plan from day one'?", choices:["You always need a detailed plan before starting anything","Great things can grow naturally through consistent small actions without a perfect plan","Planning is a waste of time","Only termites can build without plans"], answer:1, hlIdx:1 },
+      { type:"infer", q:"Why might human architects find inspiration in a termite mound?", choices:["Because termites are very smart animals","Because nature has often evolved solutions to problems that humans then copy","Because termites own patents","Because all buildings should look like mounds"], answer:1, hlIdx:2 }
+    ]
+  },
+  {
+    id: 14, title: "The Dolphin's Playful Intelligence", theme: "ocean", emoji: "🐬",
+    text: "Dolphins are among the most intelligent animals on Earth. They live in complex social groups, communicate using unique whistles that act like names, use tools — such as carrying sea sponges on their snouts to protect themselves while foraging on the seafloor — and even teach skills to their young.\n\nBut what sets dolphins apart is that they play. They surf waves for no reason other than fun. They blow bubble rings and pop them. Young dolphins spend hours inventing games. Scientists believe play is directly linked to intelligence — it's how creative minds develop.\n\nPlay isn't a waste of time. It's how you try things without the fear of failing. It's how you discover what you're good at and what makes you feel alive. The dolphins figured that out long before anyone told them to sit still and be serious.\n\nPlaying, exploring, and being curious aren't distractions from learning — they might be the most important kind of learning there is.",
+    vocabWords: ["foraging", "inventing", "distractions"],
+    compHL: ["They live in complex social groups, communicate using unique whistles that act like names", "They surf waves for no reason other than fun. They blow bubble rings and pop them.", "Scientists believe play is directly linked to intelligence — it's how creative minds develop."],
+    inferHL: ["Play isn't a waste of time. It's how you try things without the fear of failing.", "Playing, exploring, and being curious aren't distractions from learning — they might be the most important kind of learning there is."],
+    questions: [
+      { type:"comp", q:"What do dolphins use sea sponges for?", choices:["To eat","To build nests","To protect their snouts while foraging on the seafloor","To attract mates"], answer:2, hlIdx:0 },
+      { type:"comp", q:"What do dolphin whistles act like?", choices:["Alarm systems","Names","Maps","Songs"], answer:1, hlIdx:0 },
+      { type:"comp", q:"Why do dolphins surf waves, according to the passage?", choices:["To travel faster","To hunt fish","To communicate","For no reason other than fun"], answer:3, hlIdx:1 },
+      { type:"comp", q:"What do scientists link play to?", choices:["Better hunting skills","Social bonding only","Intelligence and how creative minds develop","Physical fitness"], answer:2, hlIdx:2 },
+      { type:"vocab", q:"What does 'foraging' mean in this passage?", choices:["Swimming very fast","Resting on the seafloor","Searching for food","Fighting with predators"], answer:2, vocabWord:"foraging" },
+      { type:"vocab", q:"What does 'inventing' mean when describing young dolphins?", choices:["Copying what adults do","Creating new things or games that didn't exist before","Breaking things","Resting quietly"], answer:1, vocabWord:"inventing" },
+      { type:"vocab", q:"What does 'distractions' mean in the final paragraph?", choices:["Things that help you focus","Things that pull your attention away from what matters","Important lessons","Fun activities"], answer:1, vocabWord:"distractions" },
+      { type:"infer", q:"Why do you think the author mentions that dolphins 'play for no reason other than fun'?", choices:["To show dolphins are lazy","To argue that fun itself is valuable, not everything needs a purpose","To prove dolphins don't hunt","To show they are better than other animals"], answer:1, hlIdx:1 },
+      { type:"infer", q:"What might 'try things without the fear of failing' mean for a person?", choices:["You should never fail","Play is a safe space to experiment and learn without consequences feeling huge","Failing is always bad","You should only do things you're already good at"], answer:1, hlIdx:1 },
+      { type:"infer", q:"Why might the author say playing and curiosity are 'the most important kind of learning'?", choices:["Because school is useless","Because play and curiosity build creative thinking and self-knowledge in ways that drills can't","Because dolphins are smarter than people","Because being serious is always wrong"], answer:1, hlIdx:1 }
+    ]
+  },
+  {
+    id: 15, title: "Dragonflies: Ancient Fliers", theme: "insect", emoji: "🪲",
+    text: "Dragonflies have been flying for over 300 million years — long before the dinosaurs appeared. Ancient dragonflies were enormous, with wingspans up to 70 centimetres. The ones alive today are much smaller, but no less impressive.\n\nModern dragonflies are among the most accurate hunters on the planet. They intercept prey in mid-air with a 95% success rate — far higher than lions, sharks, or even humans with technology. They do this by predicting where their prey will be and flying to intercept it, rather than chasing it.\n\nThey've survived five mass extinctions, ice ages, and the complete reshaping of the planet, adapting each time.\n\nSome things endure not because they never change, but because they know how to adapt while keeping what works. You can be someone who handles change — not by becoming unrecognisable, but by holding onto your core self while adjusting to new situations.",
+    vocabWords: ["intercept", "endure", "adapting"],
+    compHL: ["Dragonflies have been flying for over 300 million years — long before the dinosaurs appeared.", "They intercept prey in mid-air with a 95% success rate", "They've survived five mass extinctions, ice ages, and the complete reshaping of the planet"],
+    inferHL: ["Some things endure not because they never change, but because they know how to adapt while keeping what works.", "You can be someone who handles change — not by becoming unrecognisable, but by holding onto your core self."],
+    questions: [
+      { type:"comp", q:"How long have dragonflies existed?", choices:["About 10 million years","Over 100 million years","Over 300 million years","As long as humans"], answer:2, hlIdx:0 },
+      { type:"comp", q:"What was the wingspan of ancient dragonflies?", choices:["Up to 10 centimetres","Up to 70 centimetres","Up to 2 metres","The same as today"], answer:1, hlIdx:0 },
+      { type:"comp", q:"What success rate do dragonflies have when hunting?", choices:["Around 50%","Around 75%","95%","100%"], answer:2, hlIdx:1 },
+      { type:"comp", q:"How do dragonflies catch prey, rather than chasing it?", choices:["By waiting on leaves","By using venom","By predicting where prey will be and flying to intercept it","By working in groups"], answer:2, hlIdx:1 },
+      { type:"vocab", q:"What does 'intercept' mean in this passage?", choices:["Follow closely behind","Attack from below","Move to meet and catch something before it arrives","Scare into stopping"], answer:2, vocabWord:"intercept" },
+      { type:"vocab", q:"What does 'endure' mean here?", choices:["Disappear quickly","Survive and last over a long time","Change completely","Grow larger"], answer:1, vocabWord:"endure" },
+      { type:"vocab", q:"What does 'adapting' mean in this passage?", choices:["Staying exactly the same","Giving up when things get hard","Changing to suit new conditions","Flying faster"], answer:2, vocabWord:"adapting" },
+      { type:"infer", q:"Why do you think the author compares dragonfly hunting success to lions, sharks and humans?", choices:["To show lions are weak","To emphasise just how incredibly accurate dragonflies are","To say humans should hunt more","Because all these animals are friends"], answer:1, hlIdx:1 },
+      { type:"infer", q:"What does surviving five mass extinctions tell us about dragonflies?", choices:["They are very lucky","They are the strongest animal","They are incredibly adaptable and resilient","They caused the extinctions"], answer:2, hlIdx:2 },
+      { type:"infer", q:"What does 'holding onto your core self while adjusting to new situations' mean for a person?", choices:["Never changing anything","Always copying others","Keeping your values and identity while still being flexible when circumstances change","Refusing to try new things"], answer:2, hlIdx:1 }
+    ]
+  },
+{
+    id: 16, title: "The Narwhal's Mysterious Tusk", theme: "ocean", emoji: "🦄",
+    text: "The narwhal is sometimes called the unicorn of the sea. Its spiral tusk — which can grow up to three metres long — is actually an overgrown tooth that grows through the upper lip. For centuries, people assumed it was used for fighting or breaking ice. Scientists now believe the tusk is packed with millions of nerve endings and is used to sense the environment — detecting changes in water temperature, pressure, and salt levels.\n\nThe narwhal uses its most unusual feature not as a weapon, but as a sensor — a way of feeling the world more deeply.\n\nOften the thing that makes you different is exactly what allows you to understand the world in a way others can't. What feels like a strange or awkward part of who you are might actually be a kind of sensitivity or awareness that other people don't have. Different isn't broken. Different is often exactly what's needed.",
+    vocabWords: ["spiral", "detecting", "sensitivity"],
+    compHL: ["Its spiral tusk — which can grow up to three metres long — is actually an overgrown tooth", "the tusk is packed with millions of nerve endings and is used to sense the environment", "detecting changes in water temperature, pressure, and salt levels"],
+    inferHL: ["the thing that makes you different is exactly what allows you to understand the world in a way others can't.", "Different isn't broken. Different is often exactly what's needed."],
+    questions: [
+      { type:"comp", q:"What is the narwhal's tusk actually made of?", choices:["A special type of bone","An overgrown tooth","Hardened cartilage","Layers of skin"], answer:1, hlIdx:0 },
+      { type:"comp", q:"How long can a narwhal's tusk grow?", choices:["Up to one metre","Up to two metres","Up to three metres","Up to five metres"], answer:2, hlIdx:0 },
+      { type:"comp", q:"What do scientists now believe the tusk is used for?", choices:["Fighting other narwhals","Breaking ice","Sensing the environment through nerve endings","Attracting a mate by its appearance"], answer:2, hlIdx:1 },
+      { type:"comp", q:"What can the tusk detect?", choices:["Sound waves and light","The presence of fish","Changes in water temperature, pressure, and salt levels","The direction of currents"], answer:2, hlIdx:2 },
+      { type:"vocab", q:"What does 'spiral' mean when describing the tusk?", choices:["Straight and smooth","Twisted in a continuous curve like a corkscrew","Short and flat","Hollow in the middle"], answer:1, vocabWord:"spiral" },
+      { type:"vocab", q:"What does 'detecting' mean in this passage?", choices:["Hiding something","Ignoring signals","Noticing or discovering something through sensing","Destroying something"], answer:2, vocabWord:"detecting" },
+      { type:"vocab", q:"What does 'sensitivity' mean in the final paragraph?", choices:["Weakness or fragility","The ability to notice and feel things that others might not","Being too emotional","A type of pain"], answer:1, vocabWord:"sensitivity" },
+      { type:"infer", q:"Why is it significant that the tusk is used to sense rather than fight?", choices:["Because fighting is wrong","Because it shows the most striking feature serves a subtle, powerful purpose — understanding, not aggression","Because narwhals have no enemies","Because sensing is more impressive than fighting"], answer:1, hlIdx:1 },
+      { type:"infer", q:"What does the author suggest about features that make someone seem different or unusual?", choices:["They should be hidden","They are problems to solve","They may actually be a unique strength or gift","They always cause trouble"], answer:2, hlIdx:0 },
+      { type:"infer", q:"Why might the author say 'different isn't broken'?", choices:["To say broken things are fine","To reassure that being different is not a flaw — it can be valuable","To say everyone is the same","To encourage people to fix themselves"], answer:1, hlIdx:1 }
+    ]
+  },
+  {
+    id: 17, title: "The Walking Stick Insect", theme: "insect", emoji: "🌿",
+    text: "Walking stick insects are masters of disguise. They look almost exactly like twigs or branches — complete with fake leaf damage, irregular shapes, and the ability to sway gently in the breeze to complete the illusion.\n\nSome species can even regenerate lost limbs. If a predator grabs a leg, the walking stick can drop it and grow a new one over several weeks. The loss is temporary. Recovery is built into their biology.\n\nThey also reproduce in remarkable ways — some female species can produce eggs without a male, creating copies of themselves if necessary.\n\nSetbacks don't have to be permanent. Losing something — a friendship, a chance, a good moment — stings. But like the walking stick, recovery is possible. You can rebuild. And sometimes, when everything feels like it's blending into the background and nobody seems to notice, that invisibility is just temporary too. The right moment will come.",
+    vocabWords: ["regenerate", "illusion", "temporary"],
+    compHL: ["They look almost exactly like twigs or branches — complete with fake leaf damage and irregular shapes", "If a predator grabs a leg, the walking stick can drop it and grow a new one over several weeks.", "some female species can produce eggs without a male, creating copies of themselves"],
+    inferHL: ["Setbacks don't have to be permanent.", "You can rebuild. And sometimes, when everything feels like it's blending into the background and nobody seems to notice, that invisibility is just temporary too."],
+    questions: [
+      { type:"comp", q:"What do walking stick insects look like?", choices:["Leaves and flowers","Twigs or branches","Rocks and pebbles","Dark soil"], answer:1, hlIdx:0 },
+      { type:"comp", q:"What can a walking stick insect do if it loses a leg?", choices:["Die from the injury","Find a replacement leg","Regenerate a new one over several weeks","Survive on fewer legs permanently"], answer:2, hlIdx:1 },
+      { type:"comp", q:"What unusual ability do some female walking stick species have?", choices:["They can fly","They can change colour","They can produce eggs without a male","They live twice as long as males"], answer:2, hlIdx:2 },
+      { type:"comp", q:"What do walking stick insects do to complete their disguise?", choices:["Stay completely still always","Sway gently in the breeze like a real twig","Change colour rapidly","Hide underground"], answer:1, hlIdx:0 },
+      { type:"vocab", q:"What does 'regenerate' mean in this passage?", choices:["Damage further","Grow back or regrow something lost","Shed old skin","Communicate with others"], answer:1, vocabWord:"regenerate" },
+      { type:"vocab", q:"What does 'illusion' mean here?", choices:["A real twig","Something dangerous","Something that appears real but isn't","A type of camouflage colour"], answer:2, vocabWord:"illusion" },
+      { type:"vocab", q:"What does 'temporary' mean?", choices:["Lasting forever","Not lasting — existing for only a limited time","Very painful","Getting worse over time"], answer:1, vocabWord:"temporary" },
+      { type:"infer", q:"Why does the author compare losing a friendship or chance to losing a walking stick's leg?", choices:["Because both are about insects","To show that loss, though painful, can be recovered from","Because friendship isn't important","Because people can regrow limbs too"], answer:1, hlIdx:1 },
+      { type:"infer", q:"What might 'invisibility is just temporary' mean for someone who feels unnoticed?", choices:["They should hide better","Being overlooked won't last forever — their moment will come","They should become louder","Being noticed is not important"], answer:1, hlIdx:1 },
+      { type:"infer", q:"Why is the walking stick's ability to sway in the breeze important to its survival?", choices:["It helps it breathe","It makes it look more like a real twig, completing the disguise with movement","It scares predators","It helps it find food"], answer:1, hlIdx:0 }
+    ]
+  },
+  {
+    id: 18, title: "Sea Otters: Holding Hands", theme: "ocean", emoji: "🦦",
+    text: "Sea otters sleep floating on their backs on the ocean surface. To stop themselves drifting apart during sleep, otters hold hands — or more precisely, they wrap their paws around each other in what is called a 'raft.' Groups of otters can form rafts of hundreds, resting together while the ocean moves beneath them.\n\nOtters also wrap themselves in kelp — the tall ocean seaweed — to anchor themselves to one spot while they sleep, so the current doesn't carry them away.\n\nThey are one of the few animals that use tools. They carry a favourite rock on their chest to crack open shellfish, sometimes keeping the same rock for years.\n\nThere's something in all of this worth noticing: connection keeps you grounded. The people in your life — friends, family, the ones who hold on — they're your kelp, your raft. And when you find something that works, a strategy, a person, a routine — hold on to it.",
+    vocabWords: ["precisely", "anchor", "routine"],
+    compHL: ["otters hold hands — or more precisely, they wrap their paws around each other in what is called a raft", "They carry a favourite rock on their chest to crack open shellfish, sometimes keeping the same rock for years.", "Otters also wrap themselves in kelp to anchor themselves to one spot while they sleep"],
+    inferHL: ["connection keeps you grounded. The people in your life — friends, family, the ones who hold on — they're your kelp, your raft.", "when you find something that works, a strategy, a person, a routine — hold on to it."],
+    questions: [
+      { type:"comp", q:"What is a 'raft' in this passage?", choices:["A floating wooden platform","A group of otters holding onto each other while sleeping","A type of kelp","A sleeping position for a single otter"], answer:1, hlIdx:0 },
+      { type:"comp", q:"Why do otters wrap themselves in kelp?", choices:["For warmth","To hide from predators","To anchor themselves so they don't drift away while sleeping","To attract fish"], answer:2, hlIdx:2 },
+      { type:"comp", q:"What do otters use rocks for?", choices:["Building dens","Throwing at predators","Cracking open shellfish","Playing games"], answer:2, hlIdx:1 },
+      { type:"comp", q:"How long might an otter keep the same rock?", choices:["A few days","A few weeks","A few months","Years"], answer:3, hlIdx:1 },
+      { type:"vocab", q:"What does 'precisely' mean in this passage?", choices:["Almost","More accurately or exactly","Approximately","Quickly"], answer:1, vocabWord:"precisely" },
+      { type:"vocab", q:"What does 'anchor' mean when otters use kelp?", choices:["To swim faster","To sink underwater","To hold yourself fixed in one place","To communicate with others"], answer:2, vocabWord:"anchor" },
+      { type:"vocab", q:"What does 'routine' mean in the final paragraph?", choices:["A special occasion","A regular pattern or habit you follow","A type of tool","A surprise event"], answer:1, vocabWord:"routine" },
+      { type:"infer", q:"Why do you think the author says friends and family are like 'kelp and a raft'?", choices:["Because humans can float","Because, like kelp and rafts, people who care for you keep you stable and stop you drifting","Because sea otters are social like humans","Because kelp is delicious"], answer:1, hlIdx:1 },
+      { type:"infer", q:"What does 'hold on to it' suggest about things that work well in your life?", choices:["You should grip things tightly","You should value and keep the things — people, strategies, routines — that help you","You should always try something new","Holding on is the same as being scared of change"], answer:1, hlIdx:1 },
+      { type:"infer", q:"Why might keeping the same rock for years be more than just habit for an otter?", choices:["Rocks are rare","It suggests the otter has learned what works and trusts that knowledge","Otters can't find new rocks","All otters use the same rock"], answer:1, hlIdx:0 }
+    ]
+  },
+  {
+    id: 19, title: "The Glowworm Cave", theme: "insect", emoji: "💫",
+    text: "In New Zealand's Waitomo Caves, thousands of glowworms cling to the cave ceiling, creating a false night sky of tiny blue lights. These are not worms at all — they are the larvae of a type of gnat. Each one hangs silk threads covered in sticky droplets to trap insects attracted by the light.\n\nThe glowworm creates its own light through bioluminescence — a chemical reaction in its body. The hungrier it is, the brighter it glows. It literally shines more when it needs something.\n\nIn the total darkness of a cave, these tiny creatures create something that tourists travel across the world to see. Nobody told them to make something beautiful. They just did what they do — and it turned out to be extraordinary.\n\nYou don't always know the impact of what you're doing while you're doing it. Just being yourself — doing your thing consistently and honestly — can create something that matters more than you realise.",
+    vocabWords: ["larvae", "bioluminescence", "consistently"],
+    compHL: ["In New Zealand's Waitomo Caves, thousands of glowworms cling to the cave ceiling, creating a false night sky", "The hungrier it is, the brighter it glows.", "Each one hangs silk threads covered in sticky droplets to trap insects attracted by the light."],
+    inferHL: ["You don't always know the impact of what you're doing while you're doing it.", "Just being yourself — doing your thing consistently and honestly — can create something that matters more than you realise."],
+    questions: [
+      { type:"comp", q:"Where are the glowworm caves described in this passage?", choices:["Australia","New Zealand","South Africa","Norway"], answer:1, hlIdx:0 },
+      { type:"comp", q:"What are the glowworms actually?", choices:["A type of worm","A type of beetle larva","Larvae of a type of gnat","A bioluminescent fish"], answer:2, hlIdx:0 },
+      { type:"comp", q:"What happens to a glowworm's light when it is hungrier?", choices:["It goes dark","It flickers","It gets brighter","It changes colour"], answer:2, hlIdx:1 },
+      { type:"comp", q:"What do the silk threads do?", choices:["Hold the glowworm to the ceiling","Create the blue glow","Trap insects attracted by the light","Communicate with other glowworms"], answer:2, hlIdx:2 },
+      { type:"vocab", q:"What does 'larvae' mean?", choices:["Adult insects","Baby insects in an early stage of development","A type of cave creature","The eggs of insects"], answer:1, vocabWord:"larvae" },
+      { type:"vocab", q:"What does 'bioluminescence' mean?", choices:["Sound made by living things","Light produced naturally by a living organism","Electricity from the ground","A type of chemical poison"], answer:1, vocabWord:"bioluminescence" },
+      { type:"vocab", q:"What does 'consistently' mean in the final paragraph?", choices:["Every now and then","In a loud and obvious way","Regularly, in the same way over time","Perfectly and without mistake"], answer:2, vocabWord:"consistently" },
+      { type:"infer", q:"Why do you think the author points out that nobody told the glowworms to make something beautiful?", choices:["Because glowworms can't be taught","To show that doing what you naturally do can create something meaningful without trying to impress","Because beauty is not important","Because caves are dark"], answer:1, hlIdx:1 },
+      { type:"infer", q:"What might 'you don't always know the impact of what you're doing' mean for a person?", choices:["You should always measure your impact","Your actions may be helping or inspiring others in ways you don't see","Impact doesn't matter","You should try to know everything"], answer:1, hlIdx:0 },
+      { type:"infer", q:"Why might the fact that the glowworm shines brighter when hungry be meaningful?", choices:["It shows hunger is dangerous","It suggests that your greatest moments can come when you need something most — challenge can bring out your best","It proves glowworms are greedy","It means all animals glow when hungry"], answer:1, hlIdx:1 }
+    ]
+  },
+  {
+    id: 20, title: "The Mantis: Stillness and Power", theme: "insect", emoji: "🥷",
+    text: "The praying mantis is famous for its stillness. It can remain perfectly motionless for hours, looking exactly like a leaf or a twig, waiting for prey to wander within reach. Then, faster than a blink — in less than a tenth of a second — it strikes.\n\nThe mantis has extraordinary eyesight, able to track moving targets with incredible precision. Its triangular head can rotate almost 180 degrees, giving it a wide view of the world without moving its body.\n\nMantises are also one of the few insects that can see in three dimensions — which is rare in the insect world and helps them judge distance perfectly when striking.\n\nThere is real strength in stillness. Not every moment requires movement or noise. Knowing when to be quiet, to observe, to wait — these are not signs of weakness. The most powerful action is often the one that comes after careful, patient watching. You don't always have to be the loudest thing in the room to be the most effective.",
+    vocabWords: ["precision", "dimensions", "observe"],
+    compHL: ["It can remain perfectly motionless for hours, looking exactly like a leaf or a twig", "faster than a blink — in less than a tenth of a second — it strikes.", "Its triangular head can rotate almost 180 degrees, giving it a wide view of the world without moving its body."],
+    inferHL: ["There is real strength in stillness.", "The most powerful action is often the one that comes after careful, patient watching. You don't always have to be the loudest thing in the room to be the most effective."],
+    questions: [
+      { type:"comp", q:"How long can a praying mantis remain motionless?", choices:["A few minutes","Up to an hour","For hours","Only a few seconds"], answer:2, hlIdx:0 },
+      { type:"comp", q:"How fast does the mantis strike?", choices:["In about one second","In half a second","In less than a tenth of a second","In two seconds"], answer:2, hlIdx:1 },
+      { type:"comp", q:"How far can the mantis rotate its head?", choices:["45 degrees","90 degrees","Almost 180 degrees","A full 360 degrees"], answer:2, hlIdx:2 },
+      { type:"comp", q:"What is unusual about a mantis's vision compared to other insects?", choices:["It can see ultraviolet light","It can see in the dark","It can see in three dimensions","It has the most eyes of any insect"], answer:2, hlIdx:0 },
+      { type:"vocab", q:"What does 'precision' mean in this passage?", choices:["Speed and force","Exact accuracy with no errors","A wide field of vision","A sudden movement"], answer:1, vocabWord:"precision" },
+      { type:"vocab", q:"What does 'dimensions' mean when the mantis sees in three dimensions?", choices:["Types of colour","Levels of brightness","Directions in space — including depth — that allow it to judge distance","Types of movement"], answer:2, vocabWord:"dimensions" },
+      { type:"vocab", q:"What does 'observe' mean in the final paragraph?", choices:["Hide from something","Ignore what's happening","Watch carefully and take in what's happening","Make a sudden move"], answer:2, vocabWord:"observe" },
+      { type:"infer", q:"Why is the mantis's ability to stay still so important to its success as a hunter?", choices:["Because prey is attracted to stillness","Because movement would give away its position and ruin the hunt","Because it saves energy","Because other insects are also still"], answer:1, hlIdx:0 },
+      { type:"infer", q:"What does 'strength in stillness' mean for a person?", choices:["You should never move","Being quiet and observing carefully can be just as powerful as being loud and active","Stillness means laziness","Only physical strength matters"], answer:1, hlIdx:1 },
+      { type:"infer", q:"Why might 'you don't always have to be the loudest thing in the room' be an important reminder?", choices:["Because loud people are rude","Because quieter, more thoughtful people can be just as effective or powerful as loud ones","Because noise is dangerous","Because rooms should be silent"], answer:1, hlIdx:1 }
+    ]
+  }
+];
+
+
+// ===================== STATE =====================
+let currentPassage = null;
+let currentQ = 0;
+let answers = [];
+let readPassageCount = 0;
+let wordTapCount = 0;
+let timerInterval = null;
+let elapsedSeconds = 0;
+let speechRate = 0.85;
+let currentFont = 'Lexend';
+let currentFontSize = '15px';
+let currentLineHeight = 1.7;
+let currentSpacingId = 'sp-15';
+let speechPaused = false;
+let passageText = '';
+let passageCharOffset = 0; // where we paused
+let isSpeaking = false;
+let currentUtterance = null;
+let allWordSpans = [];
+
+// ===================== LOCALSTORAGE =====================
+function loadProgress() { try { return JSON.parse(localStorage.getItem('ra_progress2')||'{}'); } catch(e){return{};} }
+function saveProgress(d) { try { localStorage.setItem('ra_progress2', JSON.stringify(d)); } catch(e){} }
+function resetProgress() { localStorage.removeItem('ra_progress2'); renderHome(); }
+
+// ===================== SETTINGS (per-passage) =====================
+function applyFont(f) {
+  currentFont = f;
+  document.getElementById('passage-body').style.fontFamily = f;
+  document.getElementById('question-area').style.fontFamily = f;
+}
+function applySize(s) {
+  currentFontSize = s;
+  document.getElementById('passage-body').style.fontSize = s;
+  document.getElementById('question-area').style.fontSize = s;
+}
+function applySpacing(lh, btnId) {
+  currentLineHeight = lh;
+  document.getElementById('passage-body').style.lineHeight = lh;
+  document.querySelectorAll('.spacing-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(btnId).classList.add('active');
+}
+function updateSpeed(v) {
+  speechRate = parseFloat(v);
+  document.getElementById('speed-label').textContent = parseFloat(v).toFixed(2) + '×';
+}
+
+// ===================== HOME =====================
+function renderHome() {
+  const progress = loadProgress();
+  const grid = document.getElementById('passages-grid');
+  grid.innerHTML = '';
+  ALL_PASSAGES.forEach(p => {
+    const done = progress[p.id];
+    const card = document.createElement('div');
+    card.className = 'pcard' + (done ? ' done' : '');
+    card.innerHTML =
+      '<div class="pcard-num">#' + p.id + '</div>' +
+      '<div class="pcard-emoji">' + p.emoji + '</div>' +
+      '<div class="pcard-title">' + p.title + '</div>' +
+      (done ? '<div class="pcard-score">' + done.correct + '/10 (' + done.pct + '%)</div>' : '');
+    card.onclick = () => startPassage(p.id);
+    grid.appendChild(card);
+  });
+}
+
+function goHome() {
+  stopSpeech();
+  clearInterval(timerInterval);
+  showScreen('home-screen');
+  renderHome();
+}
+
+// ===================== START PASSAGE =====================
+function startPassage(id) {
+  currentPassage = ALL_PASSAGES.find(p => p.id === id);
+  currentQ = 0;
+  answers = new Array(currentPassage.questions.length).fill(null);
+  readPassageCount = 0;
+  wordTapCount = 0;
+  elapsedSeconds = 0;
+  speechPaused = false;
+  isSpeaking = false;
+  passageCharOffset = 0;
+
+  document.getElementById('reading-title-nav').textContent = currentPassage.title;
+  document.getElementById('passage-num-label').textContent = 'Passage #' + currentPassage.id;
+  document.getElementById('passage-title-label').textContent = currentPassage.title;
+  document.getElementById('hl-legend').classList.remove('visible');
+  document.getElementById('pause-btn').style.display = 'none';
+
+  // Reset per-passage settings UI to current values
+  document.getElementById('font-select').value = currentFont;
+  document.getElementById('size-select').value = currentFontSize;
+  document.getElementById('speed-slider').value = speechRate;
+  document.getElementById('speed-label').textContent = speechRate.toFixed(2) + '×';
+
+  renderPassageBody();
+  renderQuestion();
+  startTimer();
+  showScreen('reading-screen');
+
+  // Apply current font/size to passage and questions
+  setTimeout(() => {
+    applyFont(currentFont);
+    applySize(currentFontSize);
+    applySpacing(currentLineHeight, currentSpacingId);
+  }, 50);
+}
+
+// ===================== PASSAGE BODY =====================
+function renderPassageBody() {
+  const body = document.getElementById('passage-body');
+  passageText = currentPassage.text;
+  const paras = passageText.split('\n\n');
+  allWordSpans = [];
+  let charPos = 0;
+
+  body.innerHTML = paras.map((para, pi) => {
+    const tokens = para.split(/(\s+)/);
+    const html = tokens.map(token => {
+      const startChar = charPos;
+      charPos += token.length;
+      if (/^\s+$/.test(token)) return token;
+      const escaped = token.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+      return '<span class="word" data-char="' + startChar + '" onclick="tapWord(this,event)">' + escaped + '</span>';
+    }).join('');
+    charPos += 2; // for \n\n
+    return '<p>' + html + '</p>';
+  }).join('');
+
+  allWordSpans = Array.from(body.querySelectorAll('.word'));
+}
+
+function tapWord(el, e) {
+  e.stopPropagation();
+  const word = el.textContent.replace(/[^a-zA-Z''\-]/g, '');
+  if (!word) return;
+  wordTapCount++;
+  // Don't cancel the passage reading — just speak the word separately
+  const u = new SpeechSynthesisUtterance(word);
+  u.rate = Math.min(speechRate * 0.9, 1.0);
+  u.pitch = 0.88;
+  setVoice(u);
+  // Interrupt any word-level TTS but not passage reading
+  if (!isSpeaking) {
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(u);
+  } else {
+    // Queue after current word boundary — just speak it
+    window.speechSynthesis.speak(u);
+  }
+}
+
+// ===================== TTS — PASSAGE =====================
+function readFullPassage() {
+  stopSpeech();
+  readPassageCount++;
+  passageCharOffset = 0;
+  speakFrom(0);
+}
+
+function speakFrom(charOffset) {
+  const textToSpeak = currentPassage.text.replace(/\n\n/g, ' ').substring(charOffset);
+  if (!textToSpeak.trim()) return;
+
+  const u = new SpeechSynthesisUtterance(textToSpeak);
+  u.rate = speechRate;
+  u.pitch = 0.88;
+  u.volume = 1;
+  setVoice(u);
+  currentUtterance = u;
+  isSpeaking = true;
+  speechPaused = false;
+
+  const btn = document.getElementById('read-all-btn');
+  const pauseBtn = document.getElementById('pause-btn');
+  if (btn) btn.classList.add('speaking');
+  if (pauseBtn) { pauseBtn.style.display = 'inline-flex'; pauseBtn.textContent = '⏸ Pause'; }
+
+  u.onboundary = (e) => {
+    if (e.name !== 'word') return;
+    passageCharOffset = charOffset + e.charIndex;
+    // Highlight word in passage
+    clearReadingHighlight();
+    // Find span whose data-char is closest to charOffset + e.charIndex
+    const target = charOffset + e.charIndex;
+    let best = null, bestDiff = Infinity;
+    allWordSpans.forEach(sp => {
+      const sc = parseInt(sp.dataset.char || '0');
+      const diff = Math.abs(sc - target);
+      if (diff < bestDiff) { bestDiff = diff; best = sp; }
+    });
+    if (best && bestDiff < 15) best.classList.add('reading-hl');
+  };
+
+  u.onend = () => {
+    clearReadingHighlight();
+    isSpeaking = false;
+    if (btn) btn.classList.remove('speaking');
+    if (pauseBtn) pauseBtn.style.display = 'none';
+    currentUtterance = null;
+  };
+
+  u.onerror = () => {
+    isSpeaking = false;
+    if (btn) btn.classList.remove('speaking');
+    if (pauseBtn) pauseBtn.style.display = 'none';
+  };
+
+  window.speechSynthesis.speak(u);
+}
+
+function pauseResumeSpeech() {
+  const pauseBtn = document.getElementById('pause-btn');
+  if (!isSpeaking && !speechPaused) return;
+
+  if (!speechPaused) {
+    // Pause
+    window.speechSynthesis.pause();
+    speechPaused = true;
+    if (pauseBtn) pauseBtn.textContent = '▶ Resume';
+  } else {
+    // Resume
+    window.speechSynthesis.resume();
+    speechPaused = false;
+    if (pauseBtn) pauseBtn.textContent = '⏸ Pause';
+  }
+}
+
+function stopSpeech() {
+  window.speechSynthesis.cancel();
+  isSpeaking = false;
+  speechPaused = false;
+  currentUtterance = null;
+  clearReadingHighlight();
+  const btn = document.getElementById('read-all-btn');
+  const pauseBtn = document.getElementById('pause-btn');
+  if (btn) btn.classList.remove('speaking');
+  if (pauseBtn) pauseBtn.style.display = 'none';
+}
+
+function clearReadingHighlight() {
+  allWordSpans.forEach(s => s.classList.remove('reading-hl'));
+}
+
+function speakText(text) {
+  // For questions/choices — doesn't affect passage reading
+  const u = new SpeechSynthesisUtterance(text);
+  u.rate = speechRate;
+  u.pitch = 0.88;
+  u.volume = 1;
+  setVoice(u);
+  if (!isSpeaking) {
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(u);
+  } else {
+    window.speechSynthesis.speak(u);
+  }
+}
+
+function setVoice(u) {
+  const voices = window.speechSynthesis.getVoices();
+  const preferred = ['Aaron','Daniel','Fred','Alex','Tom','Oliver','George','Chris','James','Nathan'];
+  let v = voices.find(v2 => preferred.some(n => v2.name.includes(n)) && v2.lang.startsWith('en'));
+  if (!v) v = voices.find(v2 => v2.lang.startsWith('en-') && !v2.name.toLowerCase().includes('female') && !v2.name.toLowerCase().includes('woman'));
+  if (!v) v = voices.find(v2 => v2.lang.startsWith('en'));
+  if (v) u.voice = v;
+}
+
+// ===================== QUESTIONS =====================
+// Store current question texts so TTS buttons can reference by index (avoids quote-escaping bugs)
+let _qTexts = [];
+
+function renderQuestion() {
+  const q = currentPassage.questions[currentQ];
+  const total = currentPassage.questions.length;
+  const pct = (currentQ / total) * 100;
+  document.getElementById('q-progress-fill').style.width = pct + '%';
+  document.getElementById('q-progress-text').textContent = 'Question ' + (currentQ+1) + ' of ' + total;
+
+  const typeLabels = {comp:'Comprehension',vocab:'Vocabulary',infer:'Inference'};
+  const typeClass = {comp:'badge-comp',vocab:'badge-vocab',infer:'badge-infer'};
+  const answered = answers[currentQ];
+
+  // Store texts in array so onclick can reference by index — avoids quote conflicts in HTML attributes
+  _qTexts = [q.q, ...q.choices];
+  // _qTexts[0] = question, _qTexts[1..4] = choices A-D
+
+  let choicesHTML = '';
+  q.choices.forEach((c, i) => {
+    let cls = '';
+    let isSelectable = true;
+    if (answered !== null) {
+      if (i === q.answer) cls = ' correct';
+      else if (i === answered && answered !== q.answer) cls = ' wrong';
+      isSelectable = false;
+    }
+    const letters = ['A','B','C','D'];
+    choicesHTML +=
+      '<div class="choice-wrapper">' +
+        '<div class="choice' + cls + (isSelectable ? ' selectable' : '') + '" id="choice-' + i + '"' +
+          (isSelectable ? ' onclick="selectAnswer(' + i + ')"' : '') + '>' +
+          '<span class="choice-letter">' + letters[i] + '</span>' +
+          '<span class="choice-text">' + escHtml(c) + '</span>' +
+        '</div>' +
+        '<div class="choice-tts-row">' +
+          '<button class="tts-btn" onclick="event.stopPropagation();speakQText(' + (i+1) + ')">🔊 Listen</button>' +
+        '</div>' +
+      '</div>';
+  });
+
+  const feedbackHTML = answered !== null
+    ? '<div class="feedback-msg ' + (answered===q.answer?'correct':'wrong') + '">' +
+        (answered===q.answer ? '✅ Correct!' : '❌ Not quite — see the correct answer highlighted above.') +
+      '</div>'
+    : '';
+
+  const navHTML =
+    '<div class="q-nav">' +
+      (currentQ > 0 ? '<button class="btn btn-ghost btn-sm" onclick="prevQ()">← Back</button>' : '<span></span>') +
+      (answered !== null && currentQ < total-1 ? '<button class="btn btn-primary btn-sm" onclick="nextQ()">Next →</button>' : '') +
+      (answered !== null && currentQ === total-1 ? '<button class="btn btn-leaf btn-sm" onclick="showSummary()">✅ Finish</button>' : '') +
+    '</div>';
+
+  document.getElementById('question-area').innerHTML =
+    '<div class="q-type-badge ' + typeClass[q.type] + '">' + typeLabels[q.type] + '</div>' +
+    '<div class="q-header">' +
+      '<div class="q-text">' + escHtml(q.q) + '</div>' +
+      '<button class="tts-btn" onclick="speakQText(0)">🔊 Listen</button>' +
+    '</div>' +
+    '<div class="choices">' + choicesHTML + '</div>' +
+    feedbackHTML +
+    navHTML;
+
+  // Re-apply font/size to question area
+  applyFont(currentFont);
+  applySize(currentFontSize);
+}
+
+// Safe TTS for questions/choices — reads from _qTexts array, no quote issues
+function speakQText(idx) {
+  const text = _qTexts[idx];
+  if (!text) return;
+  speakText(text);
+}
+
+function escHtml(str) {
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function selectAnswer(choiceIdx) {
+  const q = currentPassage.questions[currentQ];
+  // If already answered correctly, don't allow change
+  if (answers[currentQ] === q.answer) return;
+  answers[currentQ] = choiceIdx;
+
+  clearPassageHighlights();
+  if (choiceIdx !== q.answer) {
+    applyPassageHighlight(q);
+    document.getElementById('hl-legend').classList.add('visible');
+  } else {
+    document.getElementById('hl-legend').classList.remove('visible');
+  }
+  renderQuestion();
+}
+
+function clearPassageHighlights() {
+  allWordSpans.forEach(el => el.classList.remove('hl-vocab','hl-comp','hl-infer'));
+}
+
+function applyPassageHighlight(q) {
+  const type = q.type;
+  const hlClass = type==='vocab' ? 'hl-vocab' : type==='comp' ? 'hl-comp' : 'hl-infer';
+
+  if (type === 'vocab' && q.vocabWord) {
+    highlightWordInPassage(q.vocabWord, hlClass);
+  } else if (q.hlIdx !== undefined) {
+    const arr = type==='comp' ? currentPassage.compHL : currentPassage.inferHL;
+    if (arr && arr[q.hlIdx]) highlightPhraseInPassage(arr[q.hlIdx], hlClass);
+  }
+}
+
+function highlightWordInPassage(word, cls) {
+  const clean = word.toLowerCase().replace(/[^a-z'\-]/g,'');
+  allWordSpans.forEach(el => {
+    const w = el.textContent.toLowerCase().replace(/[^a-z'\-]/g,'');
+    if (w === clean) el.classList.add(cls);
+  });
+}
+
+function highlightPhraseInPassage(phrase, cls) {
+  const phraseWords = phrase.toLowerCase().replace(/[^a-z\s'\-]/g,'').split(/\s+/).filter(Boolean);
+  const spanWords = allWordSpans.map(s => s.textContent.toLowerCase().replace(/[^a-z'\-]/g,''));
+
+  for (let i = 0; i <= spanWords.length - phraseWords.length; i++) {
+    let match = true;
+    for (let j = 0; j < phraseWords.length; j++) {
+      if (spanWords[i+j] !== phraseWords[j]) { match=false; break; }
+    }
+    if (match) {
+      for (let j = 0; j < phraseWords.length; j++) allWordSpans[i+j].classList.add(cls);
+      return;
+    }
+  }
+  // Fuzzy: match first 3 words
+  const first3 = phraseWords.slice(0,3);
+  for (let i = 0; i <= spanWords.length-3; i++) {
+    if (spanWords[i]===first3[0] && spanWords[i+1]===first3[1]) {
+      for (let j=0; j<Math.min(phraseWords.length, allWordSpans.length-i); j++) allWordSpans[i+j].classList.add(cls);
+      return;
+    }
+  }
+}
+
+function nextQ() { currentQ++; clearPassageHighlights(); document.getElementById('hl-legend').classList.remove('visible'); renderQuestion(); }
+function prevQ() { currentQ--; clearPassageHighlights(); document.getElementById('hl-legend').classList.remove('visible'); renderQuestion(); }
+
+// ===================== TIMER =====================
+function startTimer() {
+  clearInterval(timerInterval);
+  elapsedSeconds = 0;
+  timerInterval = setInterval(() => {
+    elapsedSeconds++;
+    const m = Math.floor(elapsedSeconds/60);
+    const s = elapsedSeconds%60;
+    const el = document.getElementById('timer-display');
+    if (el) el.textContent = m + ':' + s.toString().padStart(2,'0');
+  }, 1000);
+}
+
+// ===================== SUMMARY =====================
+function showSummary() {
+  stopSpeech();
+  clearInterval(timerInterval);
+
+  const qs = currentPassage.questions;
+  let correct=0, compC=0,compT=0, vocabC=0,vocabT=0, inferC=0,inferT=0;
+  qs.forEach((q,i) => {
+    const ok = answers[i]===q.answer;
+    if(ok) correct++;
+    if(q.type==='comp'){compT++;if(ok)compC++;}
+    if(q.type==='vocab'){vocabT++;if(ok)vocabC++;}
+    if(q.type==='infer'){inferT++;if(ok)inferC++;}
+  });
+
+  const pct = Math.round((correct/qs.length)*100);
+  const m = Math.floor(elapsedSeconds/60), s = elapsedSeconds%60;
+  const timeStr = m + ':' + s.toString().padStart(2,'0');
+  const speedLabel = document.getElementById('speed-label').textContent;
+  const fontLabel = document.getElementById('font-select').options[document.getElementById('font-select').selectedIndex].text;
+  const sizeLabel = currentFontSize;
+  const spacingLabel = currentLineHeight >= 2 ? '2× (double)' : '1.5×';
+
+  const progress = loadProgress();
+  progress[currentPassage.id] = {correct, pct};
+  saveProgress(progress);
+
+  const observations = generateObservations(correct,pct,compC,compT,vocabC,vocabT,inferC,inferT,readPassageCount,wordTapCount);
+
+  const circ = 2*Math.PI*45;
+  const dash = (pct/100)*circ;
+  const ringColor = pct>=80 ? '#2e7d32' : pct>=60 ? '#f9a825' : '#c62828';
+
+  document.getElementById('summary-content').innerHTML =
+    '<div class="summary-card">' +
+      '<div class="summary-title">📊 ' + currentPassage.emoji + ' Passage #' + currentPassage.id + '</div>' +
+      '<p style="color:var(--text-dim);font-size:0.85rem;margin-bottom:16px">' + currentPassage.title + '</p>' +
+      '<svg class="accuracy-ring" viewBox="0 0 100 100">' +
+        '<circle cx="50" cy="50" r="45" fill="none" stroke="#e2e8f0" stroke-width="10"/>' +
+        '<circle cx="50" cy="50" r="45" fill="none" stroke="' + ringColor + '" stroke-width="10" ' +
+          'stroke-dasharray="' + dash.toFixed(1) + ' ' + circ.toFixed(1) + '" stroke-linecap="round" ' +
+          'style="transform:rotate(-90deg);transform-origin:50% 50%"/>' +
+      '</svg>' +
+      '<div class="accuracy-pct">' + pct + '%</div>' +
+      '<div class="summary-row"><span class="summary-label">Total Score</span><span class="summary-val">' + correct + ' / ' + qs.length + '</span></div>' +
+      '<div class="summary-row"><span class="summary-label">✅ Correct</span><span class="summary-val green">' + correct + '</span></div>' +
+      '<div class="summary-row"><span class="summary-label">❌ Incorrect</span><span class="summary-val red">' + (qs.length-correct) + '</span></div>' +
+      '<div class="summary-row"><span class="summary-label">⏱ Time Taken</span><span class="summary-val">' + timeStr + '</span></div>' +
+      '<div class="q-breakdown">' +
+        '<div class="qb-card"><div class="qb-label">Comprehension</div><div class="qb-score" style="color:#1565a8">' + compC + '/' + compT + '</div></div>' +
+        '<div class="qb-card"><div class="qb-label">Vocabulary</div><div class="qb-score" style="color:#f57f17">' + vocabC + '/' + vocabT + '</div></div>' +
+        '<div class="qb-card"><div class="qb-label">Inference</div><div class="qb-score" style="color:#e65100">' + inferC + '/' + inferT + '</div></div>' +
+      '</div>' +
+    '</div>' +
+
+    '<div class="summary-card">' +
+      '<div class="summary-title" style="font-size:1.3rem">🖥 Accessibility Settings Used</div>' +
+      '<div class="support-stats">' +
+        '<div class="stat-pill">🔤 Font: <strong>' + fontLabel + '</strong></div>' +
+        '<div class="stat-pill">📏 Size: <strong>' + sizeLabel + '</strong></div>' +
+        '<div class="stat-pill">↕ Spacing: <strong>' + spacingLabel + '</strong></div>' +
+        '<div class="stat-pill">🔊 Speed: <strong>' + speedLabel + '</strong></div>' +
+      '</div>' +
+    '</div>' +
+
+    '<div class="summary-card">' +
+      '<div class="summary-title" style="font-size:1.3rem">📖 Reading Support Used</div>' +
+      '<div class="support-stats">' +
+        '<div class="stat-pill">📖 Passage read aloud: <strong>' + readPassageCount + '×</strong></div>' +
+        '<div class="stat-pill">🔤 Words tapped: <strong>' + wordTapCount + '</strong></div>' +
+      '</div>' +
+      '<p style="margin-top:10px;font-size:0.85rem;color:var(--text-dim)">' +
+        (readPassageCount===0 && wordTapCount===0
+          ? 'No audio reading support was used this session.'
+          : (readPassageCount>0 ? 'The full passage was played ' + readPassageCount + ' time' + (readPassageCount>1?'s':'') + '. ' : '') +
+            (wordTapCount>0 ? wordTapCount + ' individual word' + (wordTapCount>1?' taps were':' tap was') + ' used for pronunciation support.' : '')) +
+      '</p>' +
+    '</div>' +
+
+    '<div class="summary-card">' +
+      '<div class="summary-title" style="font-size:1.3rem">📝 Notes</div>' +
+      observations.sections.map(sec =>
+        '<div class="narrative-section">' +
+          '<h3>' + sec.heading + '</h3>' +
+          (sec.list
+            ? '<ul class="obs-list">' + sec.list.map(item => '<li>' + item + '</li>').join('') + '</ul>'
+            : '<p>' + sec.text + '</p>') +
+        '</div>'
+      ).join('') +
+    '</div>' +
+
+    '<div class="no-print" style="display:flex;gap:12px;flex-wrap:wrap;margin-top:4px;">' +
+      '<button class="btn btn-primary" onclick="goHome()">← Back to Passages</button>' +
+      '<button class="btn btn-sand" onclick="window.print()">🖨 Print Summary</button>' +
+      (currentPassage.id < 20 ? '<button class="btn btn-leaf" onclick="startPassage(' + (currentPassage.id+1) + ')">Next Passage →</button>' : '') +
+    '</div>';
+
+  showScreen('summary-screen');
+}
+
+function generateObservations(correct,pct,compC,compT,vocabC,vocabT,inferC,inferT,readCount,tapCount) {
+  const overall = [];
+  const compObs = [];
+  const vocabObs = [];
+  const inferObs = [];
+
+  // Overall
+  overall.push('Overall score: ' + correct + '/10 (' + pct + '%).');
+  if (pct >= 80) overall.push('Performance was in the strong range (80%+).');
+  else if (pct >= 60) overall.push('Performance was in the moderate range (60–79%).');
+  else overall.push('Performance was in the developing range (below 60%). More practice or scaffolding may be helpful.');
+
+  // Comprehension
+  compObs.push('Comprehension: ' + compC + '/' + compT + ' (' + Math.round(compC/compT*100) + '%).');
+  if (compC === compT) compObs.push('All literal comprehension questions answered correctly.');
+  else if (compC >= 3) compObs.push('Most literal comprehension questions answered correctly.');
+  else compObs.push('Difficulty locating specific information directly stated in the text.');
+
+  // Vocab
+  vocabObs.push('Vocabulary: ' + vocabC + '/' + vocabT + ' (' + Math.round(vocabC/vocabT*100) + '%).');
+  if (vocabC === vocabT) vocabObs.push('All vocabulary-in-context questions answered correctly.');
+  else if (vocabC >= 2) vocabObs.push('Most vocabulary questions answered correctly.');
+  else vocabObs.push('Difficulty using context to determine word meaning. Pre-teaching key words before reading may help.');
+
+  // Inference
+  inferObs.push('Inference: ' + inferC + '/' + inferT + ' (' + Math.round(inferC/inferT*100) + '%).');
+  if (inferC === inferT) inferObs.push('All inference questions answered correctly — able to read beyond what is directly stated.');
+  else if (inferC >= 2) inferObs.push('Most inference questions answered correctly.');
+  else inferObs.push('Difficulty with questions requiring reasoning beyond the text. This is a developing skill for many readers.');
+
+  // Support
+  const supportObs = [];
+  supportObs.push('Passage read aloud ' + readCount + ' time' + (readCount!==1?'s':'') + '.');
+  supportObs.push(tapCount + ' word' + (tapCount!==1?'s':'') + ' tapped for audio support.');
+  if (readCount > 1) supportObs.push('Repeated use of "Read Passage" noted — text access via audio was important this session.');
+  if (tapCount > 10) supportObs.push('High word-tap count may indicate decoding difficulty with unfamiliar vocabulary.');
+  if (readCount === 0 && tapCount === 0) supportObs.push('No audio support used — student attempted all reading independently.');
+
+  return {
+    sections: [
+      { heading: '📊 Overall Performance', list: overall },
+      { heading: '📖 Comprehension', list: compObs },
+      { heading: '🔤 Vocabulary', list: vocabObs },
+      { heading: '🔍 Inference', list: inferObs },
+      { heading: '🔊 Reading Support', list: supportObs },
+    ]
+  };
+}
+
+// ===================== SCREEN MGMT =====================
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+// ===================== INIT =====================
+window.speechSynthesis.onvoiceschanged = () => {};
+renderHome();
+</script>
+</body>
+</html>
